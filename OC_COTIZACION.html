@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObraCore — Cotización</title>
+
+<!-- Única fuente externa permitida: Google Fonts (Space Grotesk para UI, IBM Plex Mono para datos/técnico) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   Autocontenido como OC_SOLICITUD.html: los tokens de abajo son
+   copia exacta de los de styles.css, para verse igual sin depender
+   de ese archivo (todavía no sabemos si esto será pestaña o página
+   aparte).
+   ============================================================ */
+:root {
+  /* Copia exacta de styles.css (dirección "Plano de ingeniería") */
+  --oc-bg: #0c1016;
+  --oc-surface: #141b24;
+  --oc-border: #24313f;
+  --oc-accent-cyan: #4dd8ff;
+  --oc-accent-gold: #f2b84b;
+  --oc-text-muted: #7d8a99;
+  --oc-text: #e8edf3;
+
+  --oc-accent-cyan-glow: rgba(77, 216, 255, 0.16);
+  --oc-accent-cyan-glow-strong: rgba(77, 216, 255, 0.32);
+  --oc-accent-cyan-border: rgba(77, 216, 255, 0.32);
+  --oc-accent-gold-glow: rgba(242, 184, 75, 0.22);
+  --oc-accent-gold-border: rgba(242, 184, 75, 0.45);
+
+  /* Alerta / error (mismo nombre que styles.css) */
+  --oc-alert: #ff6b5b;
+  --oc-alert-glow: rgba(255, 107, 91, 0.16);
+  --oc-alert-border: rgba(255, 107, 91, 0.42);
+
+  /* Completado / resultado positivo (mismo nombre que styles.css) */
+  --oc-ok: #3ddc84;
+  --oc-ok-glow: rgba(61, 220, 132, 0.18);
+  --oc-ok-border: rgba(61, 220, 132, 0.42);
+
+  --oc-grid-line: rgba(77, 216, 255, 0.035);
+
+  --oc-radius: 3px;
+  --oc-radius-panel: 4px;
+  --oc-navbar-h: 61px;
+
+  --oc-font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --oc-font-mono: 'IBM Plex Mono', Consolas, monospace;
+
+  --oc-dur-fast: 150ms;
+  --oc-dur-med: 240ms;
+  --oc-dur-slow: 300ms;
+  --oc-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background-color: var(--oc-bg);
+  background-image:
+    linear-gradient(var(--oc-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--oc-grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--oc-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--oc-text-muted); }
+* { scrollbar-width: thin; scrollbar-color: var(--oc-border) transparent; }
+
+/* ---- Navbar: mismo patrón que OC_SOLICITUD.html ---- */
+#oc-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--oc-navbar-h);
+  display: flex;
+  align-items: center;
+  background: var(--oc-surface);
+  border-bottom: 1px solid var(--oc-border);
+  padding: 0 24px;
+  gap: 24px;
+}
+#oc-logo {
+  font-family: var(--oc-font-mono);
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--oc-text);
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+#oc-logo span { color: var(--oc-accent-gold); }
+#oc-back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+#oc-back-link:hover { color: var(--oc-text); background: rgba(255, 255, 255, 0.03); border-color: var(--oc-border); }
+#oc-nav-sections { display: flex; gap: 4px; list-style: none; margin: 0 0 0 12px; padding: 0; height: 100%; }
+#oc-nav-sections li { display: flex; align-items: center; }
+#oc-nav-sections button {
+  background: transparent; border: 1px solid transparent; color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui); font-size: 15px; font-weight: 500; padding: 7px 17px;
+  border-radius: 6px; cursor: pointer; transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+#oc-nav-sections button:hover { color: var(--oc-text); background: rgba(255, 255, 255, 0.03); border-color: var(--oc-border); }
+
+/* ---- Contenido ---- */
+#oc-cotizacion-main { max-width: 840px; margin: 0 auto; padding: 32px 20px 80px; }
+
+.oc-page-title { font-family: var(--oc-font-mono); font-size: 22px; font-weight: 600; letter-spacing: 0.3px; margin: 0 0 6px; }
+.oc-page-subtitle { font-family: var(--oc-font-mono); font-size: 13px; color: var(--oc-text-muted); margin: 0 0 24px; }
+
+.oc-card { background: var(--oc-surface); border: 1px solid var(--oc-border); border-radius: var(--oc-radius-panel); padding: 24px; margin-bottom: 20px; }
+.oc-card-title {
+  font-family: var(--oc-font-mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--oc-text-muted); margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--oc-border);
+}
+
+.oc-field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.oc-field { display: flex; flex-direction: column; gap: 6px; }
+.oc-field label { font-size: 13px; font-weight: 500; color: var(--oc-text-muted); }
+
+.oc-input, select.oc-input, textarea.oc-input {
+  width: 100%; background: var(--oc-bg); border: 1px solid var(--oc-border); border-radius: var(--oc-radius);
+  color: var(--oc-text); font-family: var(--oc-font-ui); font-size: 14px; padding: 9px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-input::placeholder { color: var(--oc-text-muted); opacity: 0.7; }
+.oc-input:focus { outline: none; border-color: var(--oc-accent-cyan); box-shadow: 0 0 0 3px var(--oc-accent-cyan-glow); }
+.oc-input[readonly], .oc-input:disabled { color: var(--oc-text-muted); cursor: default; opacity: 0.85; }
+.oc-input.oc-input-error { border-color: var(--oc-alert); box-shadow: 0 0 0 3px var(--oc-alert-glow); }
+textarea.oc-input { resize: vertical; min-height: 60px; }
+.oc-mono { font-family: var(--oc-font-mono); }
+
+/* ---- Partidas ---- */
+#oc-partidas-header, .oc-partida-row {
+  display: grid;
+  grid-template-columns: 70px 90px 1fr 100px 80px 100px auto auto;
+  gap: 8px;
+  align-items: center;
+}
+#oc-partidas-header {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--oc-text-muted); padding: 0 2px 8px; border-bottom: 1px solid var(--oc-border); margin-bottom: 10px;
+}
+.oc-partida-row { padding: 4px 0; }
+.oc-partida-row .oc-input { padding: 7px 8px; font-size: 13px; }
+.oc-partida-importe {
+  font-family: var(--oc-font-mono); font-size: 13px; text-align: right; color: var(--oc-text);
+  padding-right: 4px; white-space: nowrap;
+}
+.oc-partida-actions { display: flex; gap: 4px; }
+.oc-icon-btn {
+  background: transparent; border: 1px solid var(--oc-border); color: var(--oc-text-muted);
+  border-radius: var(--oc-radius); width: 28px; height: 28px; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; transition: color 0.15s ease, border-color 0.15s ease;
+}
+.oc-icon-btn:hover { color: var(--oc-accent-cyan); border-color: var(--oc-accent-cyan); }
+.oc-icon-btn.oc-icon-btn-danger:hover { color: var(--oc-alert); border-color: var(--oc-alert); }
+
+.oc-btn-add {
+  background: transparent; border: 1px dashed var(--oc-border); color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui); font-size: 13px; font-weight: 500; padding: 9px 14px;
+  border-radius: var(--oc-radius); cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease; margin-top: 10px;
+}
+.oc-btn-add:hover { color: var(--oc-accent-cyan); border-color: var(--oc-accent-cyan); }
+
+/* ---- Totales ---- */
+.oc-totales { display: flex; flex-direction: column; gap: 8px; max-width: 320px; margin-left: auto; }
+.oc-totales-fila { display: flex; justify-content: space-between; font-size: 14px; color: var(--oc-text-muted); }
+.oc-totales-fila .oc-mono { color: var(--oc-text); }
+.oc-totales-fila.oc-totales-final { border-top: 1px solid var(--oc-border); padding-top: 8px; margin-top: 4px; font-size: 17px; font-weight: 700; color: var(--oc-text); }
+.oc-totales-fila.oc-totales-final .oc-mono { color: var(--oc-accent-gold); }
+.oc-iva-input { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.oc-iva-input .oc-input { width: 80px; }
+
+/* ---- Acciones / feedback ---- */
+.oc-form-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.oc-btn {
+  font-family: var(--oc-font-ui); font-size: 14px; font-weight: 600; padding: 10px 20px;
+  border-radius: var(--oc-radius); cursor: pointer; transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-btn-primary { background: var(--oc-accent-gold-glow); border: 1px solid var(--oc-accent-gold); color: var(--oc-accent-gold); }
+.oc-btn-primary:hover { box-shadow: 0 0 10px var(--oc-accent-gold-glow); }
+.oc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.oc-btn-secondary { background: transparent; border: 1px solid var(--oc-border); color: var(--oc-text-muted); }
+.oc-btn-secondary:hover { color: var(--oc-text); border-color: var(--oc-text-muted); }
+
+#oc-save-feedback { font-size: 13px; font-family: var(--oc-font-mono); color: var(--oc-accent-cyan); opacity: 0; transform: translateX(-4px); transition: opacity var(--oc-dur-slow) ease, transform var(--oc-dur-slow) var(--oc-ease-out); }
+#oc-save-feedback.oc-visible { opacity: 1; transform: none; }
+#oc-save-feedback.oc-error { color: var(--oc-alert); }
+
+/* ---- Aviso de solo lectura ---- */
+.oc-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  background: var(--oc-surface); border: 1px solid var(--oc-accent-gold-border); border-radius: var(--oc-radius-panel);
+  padding: 14px 20px; margin-bottom: 20px;
+}
+/* El atributo nativo [hidden] y esta clase tienen la misma
+   especificidad; sin esta regla el display:flex de arriba gana y el
+   banner se ve aunque esté "hidden" (bug real: se veía incluso en
+   cotizaciones borrador, que nunca deberían mostrarlo). */
+.oc-banner[hidden] { display: none; }
+.oc-banner-text { font-size: 13px; color: var(--oc-text-muted); }
+.oc-banner-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ---- Respuesta del cliente a la cotización: ámbar si aceptó, neutro
+   atenuado si rechazó — nunca rojo, no es un error. ---- */
+.oc-banner-text--ok { color: var(--oc-accent-gold); font-weight: 600; }
+.oc-banner-text--neutro { color: var(--oc-text-muted); opacity: 0.85; }
+.oc-link-sutil {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--oc-accent-cyan); font-family: var(--oc-font-ui);
+  font-size: 12px; font-weight: 600; text-decoration: none;
+}
+.oc-link-sutil:hover { text-decoration: underline; }
+
+/* .oc-field tiene la misma especificidad que [hidden]; sin esto el
+   display:flex del autor gana y el campo de motivo se ve aunque esté
+   "hidden" (mismo bug ya encontrado en .oc-banner/.oc-modal-overlay). */
+#oc-respuesta-motivo-wrap[hidden] { display: none; }
+
+/* ---- Modal de confirmación (nunca confirm() nativo) ---- */
+.oc-modal-overlay {
+  position: fixed; inset: 0; background: rgba(6, 7, 10, 0.6); z-index: 700;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.oc-modal-overlay[hidden] { display: none; }
+.oc-modal {
+  background: var(--oc-surface); border: 1px solid var(--oc-border); border-radius: var(--oc-radius-panel);
+  padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.oc-modal h3 { margin: 0 0 10px; font-family: var(--oc-font-mono); font-size: 16px; }
+.oc-modal p { margin: 0 0 20px; font-size: 13px; color: var(--oc-text-muted); line-height: 1.5; }
+.oc-modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+.oc-empty-state { text-align: center; padding: 60px 20px; color: var(--oc-text-muted); }
+
+/* ---- Foco visible (teclado) y movimiento (obracore-motion) ---- */
+:focus-visible { outline: 2px solid var(--oc-accent-cyan); outline-offset: 2px; }
+.oc-input:focus-visible, select.oc-input:focus-visible { outline: none; }
+
+@keyframes oc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes oc-pop-in { from { opacity: 0; transform: translateY(4px) scale(0.97); } to { opacity: 1; transform: none; } }
+.oc-card { animation: oc-fade-in var(--oc-dur-med) ease both; }
+.oc-modal { animation: oc-pop-in var(--oc-dur-med) var(--oc-ease-out) both; }
+.oc-modal-overlay { animation: oc-fade-in var(--oc-dur-med) ease both; }
+
+/* Con reduced-motion todo aparece en su estado final */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<header id="oc-navbar">
+  <a href="OC_MAIN.html" id="oc-back-link" data-i18n="cotizacion.accion.volver">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    Volver al calendario
+  </a>
+  <div id="oc-logo">Obra<span>Core</span></div>
+  <ul id="oc-nav-sections">
+    <li><button type="button" data-nav="primero">Primero</button></li>
+    <li><button type="button" data-nav="segundo">Segundo</button></li>
+    <li><button type="button" data-nav="tercero">Tercero</button></li>
+    <li><button type="button" data-nav="cuarto">Cuarto</button></li>
+  </ul>
+</header>
+
+<main id="oc-cotizacion-main">
+  <div id="oc-vista-normal" hidden>
+    <h1 class="oc-page-title" data-i18n="cotizacion.titulo">Cotización</h1>
+    <p class="oc-page-subtitle" id="oc-folio-display">—</p>
+
+    <div id="oc-readonly-banner" class="oc-banner" hidden>
+      <span class="oc-banner-text" data-i18n="cotizacion.readonly.aviso">Esta cotización ya fue emitida y no se puede editar. Cualquier cambio va como actualización o adicional.</span>
+      <div class="oc-banner-actions">
+        <button type="button" id="oc-btn-ver-pdf" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.verPdf">Ver PDF</button>
+        <button type="button" id="oc-btn-descargar" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.descargar">Descargar</button>
+        <button type="button" id="oc-btn-actualizar" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.actualizar">Actualizar</button>
+        <button type="button" id="oc-btn-adicional" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.adicional">Adicional</button>
+      </div>
+    </div>
+
+    <!-- Respuesta del cliente: si sigue 'emitida', ofrece registrar la
+         respuesta; si ya tiene una, muestra la franja + "Corregir". El
+         PDF emitido nunca se toca desde aquí. -->
+    <div id="oc-respuesta-banner" class="oc-banner" hidden>
+      <span class="oc-banner-text" id="oc-respuesta-banner-texto"></span>
+      <div class="oc-banner-actions">
+        <button type="button" id="oc-btn-aceptar-cliente" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.respuesta.accion.aceptar">Cliente aceptó</button>
+        <button type="button" id="oc-btn-rechazar-cliente" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.respuesta.accion.rechazar">Cliente rechazó</button>
+        <button type="button" id="oc-link-corregir" class="oc-link-sutil" data-i18n="cotizacion.respuesta.corregir" hidden>Corregir</button>
+      </div>
+    </div>
+
+    <div id="oc-cotizacion-form">
+
+      <section class="oc-card">
+        <h2 class="oc-card-title" data-i18n="cotizacion.seccion.encabezado">Encabezado</h2>
+        <div class="oc-field-grid">
+          <div class="oc-field">
+            <label data-i18n="cotizacion.campo.folio">Folio</label>
+            <input type="text" id="cot-folio" class="oc-input oc-mono" readonly>
+          </div>
+          <div class="oc-field">
+            <label data-i18n="cotizacion.campo.fecha">Fecha</label>
+            <input type="text" id="cot-fecha" class="oc-input oc-mono" readonly>
+          </div>
+          <div class="oc-field">
+            <label data-i18n="cotizacion.campo.vigencia">Vigencia (días)</label>
+            <input type="number" id="cot-vigencia" class="oc-input" min="1" step="1" value="15">
+          </div>
+          <div class="oc-field">
+            <label data-i18n="cotizacion.campo.moneda">Moneda</label>
+            <select id="cot-moneda" class="oc-input">
+              <option value="MXN">MXN</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="oc-card">
+        <h2 class="oc-card-title" data-i18n="cotizacion.seccion.cliente">Cliente</h2>
+        <div class="oc-field-grid">
+          <div class="oc-field"><label data-i18n="cotizacion.campo.nombreCliente">Nombre</label><input type="text" id="cli-nombre" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.contacto">Contacto</label><input type="text" id="cli-contacto" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.email">Correo</label><input type="email" id="cli-email" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.telefono">Teléfono</label><input type="tel" id="cli-telefono" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.rfc">RFC</label><input type="text" id="cli-rfc" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.direccion">Dirección</label><input type="text" id="cli-direccion" class="oc-input"></div>
+        </div>
+      </section>
+
+      <section class="oc-card">
+        <h2 class="oc-card-title" data-i18n="cotizacion.seccion.proyecto">Proyecto</h2>
+        <div class="oc-field-grid">
+          <div class="oc-field"><label data-i18n="cotizacion.campo.nombreProyecto">Nombre del proyecto</label><input type="text" id="pro-nombre" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.ubicacion">Ubicación</label><input type="text" id="pro-ubicacion" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.tipoProyecto">Tipo de proyecto</label><input type="text" id="pro-tipo" class="oc-input"></div>
+        </div>
+      </section>
+
+      <section class="oc-card">
+        <h2 class="oc-card-title" data-i18n="cotizacion.seccion.partidas">Partidas</h2>
+        <div id="oc-partidas-header">
+          <span data-i18n="cotizacion.campo.cantidad">Cant.</span>
+          <span data-i18n="cotizacion.campo.unidad">Unidad</span>
+          <span data-i18n="cotizacion.campo.descripcion">Descripción</span>
+          <span data-i18n="cotizacion.campo.precioUnitario">P. unitario</span>
+          <span data-i18n="cotizacion.campo.descuentoPct">Desc. %</span>
+          <span style="text-align:right" data-i18n="cotizacion.campo.importe">Importe</span>
+          <span></span><span></span>
+        </div>
+        <div id="oc-partidas-body"></div>
+        <button type="button" id="oc-btn-add-partida" class="oc-btn-add" data-i18n="cotizacion.accion.agregarPartida">+ Agregar partida</button>
+        <p id="oc-partidas-error" class="oc-banner-text" style="color:var(--oc-alert);display:none;margin-top:10px;"></p>
+      </section>
+
+      <section class="oc-card">
+        <h2 class="oc-card-title" data-i18n="cotizacion.seccion.totales">Totales</h2>
+        <div class="oc-iva-input">
+          <label for="cot-iva" data-i18n="cotizacion.campo.iva">IVA</label>
+          <input type="number" id="cot-iva" class="oc-input" min="0" max="100" step="0.01" value="16">
+          <span>%</span>
+        </div>
+        <div class="oc-totales">
+          <div class="oc-totales-fila"><span data-i18n="cotizacion.campo.subtotal">Subtotal</span><span class="oc-mono" id="tot-subtotal">$ 0.00</span></div>
+          <div class="oc-totales-fila"><span data-i18n="cotizacion.campo.descuento">Descuento</span><span class="oc-mono" id="tot-descuento">$ 0.00</span></div>
+          <div class="oc-totales-fila"><span data-i18n="cotizacion.campo.iva">IVA</span><span class="oc-mono" id="tot-iva">$ 0.00</span></div>
+          <div class="oc-totales-fila oc-totales-final"><span data-i18n="cotizacion.campo.total">Total</span><span class="oc-mono" id="tot-total">$ 0.00</span></div>
+        </div>
+      </section>
+
+      <section class="oc-card">
+        <h2 class="oc-card-title" data-i18n="cotizacion.seccion.condiciones">Condiciones</h2>
+        <div class="oc-field-grid" style="margin-bottom:16px;">
+          <div class="oc-field"><label data-i18n="cotizacion.campo.formaPago">Forma de pago</label><input type="text" id="cond-forma-pago" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.tiempoEntrega">Tiempo de entrega</label><input type="text" id="cond-tiempo" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.garantia">Garantía</label><input type="text" id="cond-garantia" class="oc-input"></div>
+          <div class="oc-field"><label data-i18n="cotizacion.campo.elaboro">Elaboró</label><input type="text" id="cot-elaboro" class="oc-input"></div>
+        </div>
+        <div class="oc-field" style="margin-bottom:16px;">
+          <label data-i18n="cotizacion.campo.notas">Notas</label>
+          <textarea id="cond-notas" class="oc-input"></textarea>
+        </div>
+        <div class="oc-field">
+          <label data-i18n="cotizacion.campo.exclusiones">Exclusiones</label>
+          <textarea id="cond-exclusiones" class="oc-input"></textarea>
+        </div>
+      </section>
+
+      <div class="oc-form-actions">
+        <button type="button" id="oc-btn-guardar-borrador" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.guardarBorrador">Guardar borrador</button>
+        <button type="button" id="oc-btn-emitir" class="oc-btn oc-btn-primary" data-i18n="cotizacion.accion.emitir">Emitir cotización</button>
+        <button type="button" id="oc-btn-cancelar" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.cancelar">Cancelar</button>
+        <button type="button" id="oc-btn-elegir-carpeta" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.elegirCarpeta" hidden>Elegir carpeta de cotizaciones</button>
+        <span id="oc-save-feedback"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="oc-vista-vacia" class="oc-empty-state" hidden>
+    <p data-i18n="cotizacion.sinSolicitud">No se encontró la solicitud indicada.</p>
+    <a href="OC_MAIN.html" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.volver">Volver al calendario</a>
+  </div>
+</main>
+
+<div id="oc-confirm-overlay" class="oc-modal-overlay" hidden>
+  <div class="oc-modal">
+    <h3 id="oc-confirm-titulo"></h3>
+    <p id="oc-confirm-texto"></p>
+    <div class="oc-modal-actions">
+      <button type="button" id="oc-confirm-cancelar" class="oc-btn oc-btn-secondary"></button>
+      <button type="button" id="oc-confirm-aceptar" class="oc-btn oc-btn-primary"></button>
+    </div>
+  </div>
+</div>
+
+<div id="oc-respuesta-overlay" class="oc-modal-overlay" hidden>
+  <div class="oc-modal">
+    <h3 id="oc-respuesta-titulo"></h3>
+    <div class="oc-field">
+      <label data-i18n="cotizacion.campo.fecha">Fecha</label>
+      <input type="date" id="oc-respuesta-fecha" class="oc-input">
+    </div>
+    <div class="oc-field" id="oc-respuesta-motivo-wrap" hidden>
+      <label data-i18n="cotizacion.respuesta.campo.motivo">Motivo</label>
+      <select id="oc-respuesta-motivo" class="oc-input">
+        <option value="precio" data-i18n="cotizacion.respuesta.motivo.precio">Precio</option>
+        <option value="tiempo" data-i18n="cotizacion.respuesta.motivo.tiempo">Tiempo</option>
+        <option value="competencia" data-i18n="cotizacion.respuesta.motivo.competencia">Competencia</option>
+        <option value="sin-respuesta" data-i18n="cotizacion.respuesta.motivo.sinRespuesta">Sin respuesta</option>
+        <option value="otro" data-i18n="cotizacion.respuesta.motivo.otro">Otro</option>
+      </select>
+    </div>
+    <div class="oc-field">
+      <label data-i18n="cotizacion.respuesta.campo.nota">Nota (opcional)</label>
+      <textarea id="oc-respuesta-nota" class="oc-input"></textarea>
+    </div>
+    <div class="oc-modal-actions">
+      <button type="button" id="oc-respuesta-cancelar" class="oc-btn oc-btn-secondary"></button>
+      <button type="button" id="oc-respuesta-aceptar" class="oc-btn oc-btn-primary"></button>
+    </div>
+  </div>
+</div>
+
+<script src="lib/jspdf.umd.min.js"></script>
+<script src="lib/jspdf.plugin.autotable.min.js"></script>
+<script src="store.js"></script>
+<script src="pdfStore.js"></script>
+<script src="pdf.js"></script>
+<script src="i18n.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function byId(id) { return document.getElementById(id); }
+
+  function getQueryParams() {
+    var params = {};
+    window.location.search.replace(/^\?/, '').split('&').forEach(function (pair) {
+      if (!pair) { return; }
+      var idx = pair.indexOf('=');
+      var key = decodeURIComponent(idx === -1 ? pair : pair.slice(0, idx));
+      var value = idx === -1 ? '' : decodeURIComponent(pair.slice(idx + 1));
+      params[key] = value;
+    });
+    return params;
+  }
+
+  function t(key) { return OC_I18N.t(key); }
+
+  // currentCotizacionId: null mientras es un borrador que aún no se ha
+  // guardado ni una sola vez (igual que currentSolicitudId en
+  // OC_SOLICITUD.html) — "Guardar borrador" decide crear vs actualizar.
+  var currentCotizacionId = null;
+  var currentCotizacion = null; // la última versión conocida (borrador o emitida)
+  var sourceSolicitudId = null; // de dónde sale un borrador nuevo (?solicitud= o ?proyecto=)
+  var sourceProyectoId = null; // proyecto dueño de esta cotización
+
+  /* ============================================================
+     PARTIDAS — tabla editable
+     ============================================================ */
+  function crearInput(tipo, valor, clase, extra) {
+    var input = document.createElement('input');
+    input.type = tipo;
+    input.className = 'oc-input ' + clase;
+    input.value = valor;
+    if (extra) {
+      Object.keys(extra).forEach(function (k) { input.setAttribute(k, extra[k]); });
+    }
+    return input;
+  }
+
+  function addPartidaRow(p) {
+    p = p || { cantidad: 1, unidad: '', descripcion: '', precioUnitario: 0, descuentoPct: 0 };
+    var row = document.createElement('div');
+    row.className = 'oc-partida-row';
+
+    var cantidad = crearInput('number', p.cantidad, 'oc-p-cantidad', { min: '0', step: 'any' });
+    var unidad = crearInput('text', p.unidad, 'oc-p-unidad');
+    var descripcion = crearInput('text', p.descripcion, 'oc-p-descripcion');
+    var precio = crearInput('number', p.precioUnitario, 'oc-p-precio', { min: '0', step: '0.01' });
+    var descuento = crearInput('number', p.descuentoPct, 'oc-p-descuento', { min: '0', max: '100', step: 'any' });
+
+    var importe = document.createElement('div');
+    importe.className = 'oc-partida-importe';
+
+    [cantidad, precio, descuento].forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        validarPartidaInput(inp);
+        recomputeTotales();
+      });
+    });
+
+    var acciones = document.createElement('div');
+    acciones.className = 'oc-partida-actions';
+
+    var dupBtn = document.createElement('button');
+    dupBtn.type = 'button';
+    dupBtn.className = 'oc-icon-btn';
+    dupBtn.title = t('cotizacion.accion.duplicar');
+    dupBtn.textContent = '⧉';
+    dupBtn.addEventListener('click', function () {
+      var valores = leerPartidaDeFila(row);
+      addPartidaRowAfter(row, valores);
+      recomputeTotales();
+    });
+
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'oc-icon-btn oc-icon-btn-danger';
+    delBtn.title = t('cotizacion.accion.eliminar');
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', function () {
+      row.parentNode.removeChild(row);
+      recomputeTotales();
+    });
+
+    acciones.appendChild(dupBtn);
+    acciones.appendChild(delBtn);
+
+    row.appendChild(cantidad);
+    row.appendChild(unidad);
+    row.appendChild(descripcion);
+    row.appendChild(precio);
+    row.appendChild(descuento);
+    row.appendChild(importe);
+    row.appendChild(acciones);
+
+    byId('oc-partidas-body').appendChild(row);
+    return row;
+  }
+
+  function addPartidaRowAfter(row, valores) {
+    var nueva = addPartidaRow(valores);
+    row.parentNode.insertBefore(nueva, row.nextSibling);
+  }
+
+  function leerPartidaDeFila(row) {
+    return {
+      cantidad: Number(row.querySelector('.oc-p-cantidad').value) || 0,
+      unidad: row.querySelector('.oc-p-unidad').value.trim(),
+      descripcion: row.querySelector('.oc-p-descripcion').value.trim(),
+      precioUnitario: Number(row.querySelector('.oc-p-precio').value) || 0,
+      descuentoPct: Number(row.querySelector('.oc-p-descuento').value) || 0
+    };
+  }
+
+  function validarPartidaInput(input) {
+    var val = Number(input.value);
+    var invalido = false;
+    if (input.classList.contains('oc-p-cantidad')) { invalido = !(val > 0); }
+    else if (input.classList.contains('oc-p-precio')) { invalido = !(val >= 0); }
+    else if (input.classList.contains('oc-p-descuento')) { invalido = val < 0 || val > 100; }
+    input.classList.toggle('oc-input-error', invalido);
+    return !invalido;
+  }
+
+  function collectPartidas() {
+    return Array.prototype.slice.call(document.querySelectorAll('.oc-partida-row')).map(leerPartidaDeFila);
+  }
+
+  function partidasValidas() {
+    var filas = Array.prototype.slice.call(document.querySelectorAll('.oc-partida-row'));
+    if (filas.length === 0) {
+      return false;
+    }
+    var ok = true;
+    filas.forEach(function (row) {
+      ['.oc-p-cantidad', '.oc-p-precio', '.oc-p-descuento'].forEach(function (sel) {
+        if (!validarPartidaInput(row.querySelector(sel))) {
+          ok = false;
+        }
+      });
+    });
+    return ok;
+  }
+
+  function loadPartidas(lista) {
+    byId('oc-partidas-body').innerHTML = '';
+    (lista && lista.length ? lista : [{ cantidad: 1, unidad: '', descripcion: '', precioUnitario: 0, descuentoPct: 0 }])
+      .forEach(function (p) { addPartidaRow(p); });
+  }
+
+  /* ============================================================
+     TOTALES — recalculados en vivo con la MISMA fórmula que usa
+     OCStore.calcularTotales (se le pasa un objeto {partidas, ivaPct}
+     "de mentiras" para no duplicar la fórmula aquí).
+     ============================================================ */
+  function formatoMoneda(valor) {
+    var moneda = byId('cot-moneda').value;
+    if (window.OCPdf) {
+      return OCPdf.formatoMoneda(valor, moneda);
+    }
+    return '$ ' + (valor || 0).toFixed(2);
+  }
+
+  function recomputeTotales() {
+    var partidas = collectPartidas();
+    var ivaPct = Number(byId('cot-iva').value) || 0;
+    var totales = OCStore.calcularTotales({ partidas: partidas, ivaPct: ivaPct });
+
+    partidas.forEach(function (p, i) {
+      var row = document.querySelectorAll('.oc-partida-row')[i];
+      var importe = (p.cantidad || 0) * (p.precioUnitario || 0) * (1 - (p.descuentoPct || 0) / 100);
+      row.querySelector('.oc-partida-importe').textContent = formatoMoneda(importe);
+    });
+
+    byId('tot-subtotal').textContent = formatoMoneda(totales.subtotal);
+    byId('tot-descuento').textContent = formatoMoneda(totales.descuento);
+    byId('tot-iva').textContent = formatoMoneda(totales.iva);
+    byId('tot-total').textContent = formatoMoneda(totales.total);
+  }
+
+  /* ============================================================
+     FORMULARIO — leer / precargar
+     ============================================================ */
+  function collectFormData() {
+    return {
+      moneda: byId('cot-moneda').value,
+      vigenciaDias: Number(byId('cot-vigencia').value) || 15,
+      cliente: {
+        nombre: byId('cli-nombre').value.trim(),
+        contacto: byId('cli-contacto').value.trim(),
+        email: byId('cli-email').value.trim(),
+        telefono: byId('cli-telefono').value.trim(),
+        rfc: byId('cli-rfc').value.trim(),
+        direccion: byId('cli-direccion').value.trim()
+      },
+      proyecto: {
+        nombre: byId('pro-nombre').value.trim(),
+        ubicacion: byId('pro-ubicacion').value.trim(),
+        tipo: byId('pro-tipo').value.trim()
+      },
+      partidas: collectPartidas(),
+      ivaPct: Number(byId('cot-iva').value) || 0,
+      condiciones: {
+        formaPago: byId('cond-forma-pago').value.trim(),
+        tiempoEntrega: byId('cond-tiempo').value.trim(),
+        garantia: byId('cond-garantia').value.trim(),
+        notas: byId('cond-notas').value.trim(),
+        exclusiones: byId('cond-exclusiones').value.trim()
+      },
+      elaboro: byId('cot-elaboro').value.trim()
+    };
+  }
+
+  function populateForm(cot) {
+    byId('cot-folio').value = cot.folio || '(' + t('cotizacion.accion.guardarBorrador').toLowerCase() + ')';
+    byId('cot-fecha').value = cot.fecha || '';
+    byId('cot-vigencia').value = cot.vigenciaDias != null ? cot.vigenciaDias : 15;
+    byId('cot-moneda').value = cot.moneda || 'MXN';
+
+    var c = cot.cliente || {};
+    byId('cli-nombre').value = c.nombre || '';
+    byId('cli-contacto').value = c.contacto || '';
+    byId('cli-email').value = c.email || '';
+    byId('cli-telefono').value = c.telefono || '';
+    byId('cli-rfc').value = c.rfc || '';
+    byId('cli-direccion').value = c.direccion || '';
+
+    var p = cot.proyecto || {};
+    byId('pro-nombre').value = p.nombre || '';
+    byId('pro-ubicacion').value = p.ubicacion || '';
+    byId('pro-tipo').value = p.tipo || '';
+
+    loadPartidas(cot.partidas);
+    byId('cot-iva').value = cot.ivaPct != null ? cot.ivaPct : 16;
+
+    var cond = cot.condiciones || {};
+    byId('cond-forma-pago').value = cond.formaPago || '';
+    byId('cond-tiempo').value = cond.tiempoEntrega || '';
+    byId('cond-garantia').value = cond.garantia || '';
+    byId('cond-notas').value = cond.notas || '';
+    byId('cond-exclusiones').value = cond.exclusiones || '';
+    byId('cot-elaboro').value = cot.elaboro || '';
+
+    byId('oc-folio-display').textContent = (cot.folio || '—') + (cot.version > 1 ? ' · v' + cot.version : '');
+
+    recomputeTotales();
+  }
+
+  function draftFromSolicitud(sol) {
+    return {
+      solicitudId: sol.id,
+      proyectoId: sol.proyectoId,
+      fecha: sol.fechaSolicitud,
+      folio: null,
+      estado: 'borrador',
+      version: 1,
+      moneda: 'MXN',
+      vigenciaDias: 15,
+      cliente: {
+        nombre: sol.generales.nombreRazonSocial || '',
+        contacto: sol.generales.asesorAsignado || '',
+        email: sol.generales.correo || '',
+        telefono: sol.generales.telefono || '',
+        rfc: '',
+        direccion: sol.generales.direccionProyecto || ''
+      },
+      proyecto: {
+        nombre: sol.detalleProyecto.descripcion || sol.detalleProyecto.tipoProyecto || '',
+        ubicacion: sol.generales.direccionProyecto || '',
+        tipo: sol.detalleProyecto.tipoProyecto || ''
+      },
+      partidas: [],
+      ivaPct: 16,
+      condiciones: { formaPago: '', tiempoEntrega: '', garantia: '', notas: '', exclusiones: '' },
+      elaboro: sol.generales.asesorAsignado || ''
+    };
+  }
+
+  /* ============================================================
+     GUARDAR / EMITIR
+     ============================================================ */
+  function showFeedback(texto, esError) {
+    var el = byId('oc-save-feedback');
+    el.textContent = texto;
+    el.classList.toggle('oc-error', !!esError);
+    el.classList.add('oc-visible');
+    setTimeout(function () { el.classList.remove('oc-visible'); }, 3000);
+  }
+
+  function guardarBorrador() {
+    var datos = collectFormData();
+    if (currentCotizacionId) {
+      currentCotizacion = OCStore.actualizarCotizacion(currentCotizacionId, datos);
+    } else {
+      datos.solicitudId = sourceSolicitudId;
+      datos.proyectoId = sourceProyectoId;
+      datos.fecha = byId('cot-fecha').value;
+      currentCotizacion = OCStore.crearCotizacion(datos);
+      currentCotizacionId = currentCotizacion.id;
+      window.history.replaceState(null, '', '?id=' + encodeURIComponent(currentCotizacionId));
+    }
+    populateForm(currentCotizacion);
+    return currentCotizacion;
+  }
+
+  // Modal de confirmación genérico: título/texto/botones se llenan según
+  // quién lo abra (emitir, corregir una respuesta, sugerencia de
+  // "marcar perdido"), y confirmHandler decide qué pasa al aceptar.
+  var confirmHandler = null;
+
+  function abrirModalConfirmacionGenerico(titulo, texto, textoAceptar, textoCancelar, onAceptar) {
+    byId('oc-confirm-titulo').textContent = titulo;
+    byId('oc-confirm-texto').textContent = texto;
+    byId('oc-confirm-aceptar').textContent = textoAceptar;
+    byId('oc-confirm-cancelar').textContent = textoCancelar;
+    confirmHandler = onAceptar;
+    byId('oc-confirm-overlay').hidden = false;
+  }
+  function abrirModalConfirmacion() {
+    abrirModalConfirmacionGenerico(
+      t('cotizacion.confirmEmitir.titulo'),
+      t('cotizacion.confirmEmitir.texto'),
+      t('cotizacion.confirmEmitir.aceptar'),
+      t('cotizacion.confirmEmitir.cancelar'),
+      confirmarEmision
+    );
+  }
+  function cerrarModalConfirmacion() {
+    byId('oc-confirm-overlay').hidden = true;
+  }
+
+  function nombreArchivoCotizacion(cot) {
+    var base = cot.folio + '_' + (cot.cliente.nombre || 'cliente');
+    return (window.OCPdfStore ? OCPdfStore.nombreArchivoSeguro(base) : base) + '.pdf';
+  }
+
+  function emitir() {
+    if (!partidasValidas()) {
+      showFeedback(t('cotizacion.aviso.partidaInvalida'), true);
+      return;
+    }
+    if (collectPartidas().length === 0) {
+      showFeedback(t('cotizacion.aviso.sinPartidas'), true);
+      return;
+    }
+    abrirModalConfirmacion();
+  }
+
+  function confirmarEmision() {
+    cerrarModalConfirmacion();
+    var cot = guardarBorrador();
+    var config = OCStore.getConfig();
+    var folioSustituido = null;
+    if (cot.basadaEn) {
+      var anterior = OCStore.getCotizacion(cot.basadaEn);
+      if (anterior) { folioSustituido = anterior.folio; }
+    }
+
+    var blob;
+    try {
+      blob = OCPdf.generarPdfCotizacion(cot, config, folioSustituido);
+    } catch (e) {
+      console.error('[ObraCore] Error generando el PDF:', e);
+      showFeedback(String(e.message || e), true);
+      return;
+    }
+
+    OCStore.emitirCotizacion(cot.id, blob).then(function (emitida) {
+      if (!emitida) {
+        return;
+      }
+      currentCotizacion = emitida;
+      var nombreArchivo = nombreArchivoCotizacion(emitida);
+      OCPdfStore.guardarEnDiscoODescargar(blob, nombreArchivo).then(function (resultado) {
+        showFeedback(t('cotizacion.aviso.emitida') + ' ' + (resultado === 'carpeta' ? t('cotizacion.aviso.carpetaGuardado') : t('cotizacion.aviso.descargado')));
+      });
+      OCPdfStore.abrirPdf(emitida.pdfKey);
+      mostrarModoSegunEstado(emitida);
+    }).catch(function (e) {
+      console.error('[ObraCore] Error emitiendo la cotización:', e);
+      showFeedback(String(e.message || e), true);
+    });
+  }
+
+  /* ============================================================
+     MODO SOLO LECTURA (cotización ya emitida)
+     ============================================================ */
+  function deshabilitarFormulario(deshabilitado) {
+    var selectores = ['#cot-vigencia', '#cot-moneda', '#cli-nombre', '#cli-contacto', '#cli-email', '#cli-telefono',
+      '#cli-rfc', '#cli-direccion', '#pro-nombre', '#pro-ubicacion', '#pro-tipo', '#cot-iva',
+      '#cond-forma-pago', '#cond-tiempo', '#cond-garantia', '#cond-notas', '#cond-exclusiones', '#cot-elaboro'];
+    selectores.forEach(function (sel) { byId(sel.slice(1)).disabled = deshabilitado; });
+    document.querySelectorAll('.oc-partida-row input').forEach(function (inp) { inp.disabled = deshabilitado; });
+    document.querySelectorAll('.oc-partida-row .oc-icon-btn').forEach(function (btn) { btn.disabled = deshabilitado; });
+    byId('oc-btn-add-partida').disabled = deshabilitado;
+    byId('oc-btn-guardar-borrador').hidden = deshabilitado;
+    byId('oc-btn-emitir').hidden = deshabilitado;
+  }
+
+  function mostrarModoSegunEstado(cot) {
+    populateForm(cot);
+    var esBorrador = cot.estado === 'borrador';
+    deshabilitarFormulario(!esBorrador);
+    byId('oc-readonly-banner').hidden = esBorrador;
+    if (!esBorrador) {
+      byId('oc-btn-ver-pdf').onclick = function () { OCPdfStore.abrirPdf(cot.pdfKey); };
+      byId('oc-btn-descargar').onclick = function () {
+        OCPdfStore.getPdf(cot.pdfKey).then(function (blob) {
+          if (blob) { OCPdfStore.descargar(blob, nombreArchivoCotizacion(cot)); }
+        });
+      };
+      byId('oc-btn-actualizar').onclick = function () {
+        window.location.href = 'OC_COTIZACION.html?base=' + encodeURIComponent(cot.id) + '&modo=version';
+      };
+      byId('oc-btn-adicional').onclick = function () {
+        window.location.href = 'OC_COTIZACION.html?base=' + encodeURIComponent(cot.id) + '&modo=adicional';
+      };
+    }
+    actualizarBannerRespuesta(cot);
+  }
+
+  /* ============================================================
+     RESPUESTA DEL CLIENTE — franja de estado + acciones. El PDF ya
+     emitido nunca se toca aquí; todo pasa por OCStore.aceptarCotizacion
+     / rechazarCotizacion / revertirRespuesta.
+     ============================================================ */
+  function motivoLabelKey(motivo) {
+    return 'cotizacion.respuesta.motivo.' + (motivo === 'sin-respuesta' ? 'sinRespuesta' : (motivo || 'otro'));
+  }
+
+  function actualizarBannerRespuesta(cot) {
+    var banner = byId('oc-respuesta-banner');
+    var btnAceptar = byId('oc-btn-aceptar-cliente');
+    var btnRechazar = byId('oc-btn-rechazar-cliente');
+    var textoEl = byId('oc-respuesta-banner-texto');
+    var linkCorregir = byId('oc-link-corregir');
+
+    if (cot.estado === 'borrador') {
+      banner.hidden = true;
+      return;
+    }
+
+    var puedeResponder = cot.estado === 'emitida';
+    btnAceptar.hidden = !puedeResponder;
+    btnRechazar.hidden = !puedeResponder;
+    btnAceptar.onclick = function () { abrirModalRespuesta('aceptada'); };
+    btnRechazar.onclick = function () { abrirModalRespuesta('rechazada'); };
+
+    var resp = cot.respuestaCliente;
+    if (resp) {
+      linkCorregir.hidden = false;
+      linkCorregir.onclick = function () { confirmarCorregirRespuesta(); };
+      if (resp.estado === 'aceptada') {
+        textoEl.textContent = t('cotizacion.respuesta.franjaAceptada') + ' ' + resp.fecha;
+        textoEl.className = 'oc-banner-text oc-banner-text--ok';
+      } else {
+        textoEl.textContent = t('cotizacion.respuesta.franjaRechazada') + ' · ' + t(motivoLabelKey(resp.motivo));
+        textoEl.className = 'oc-banner-text oc-banner-text--neutro';
+      }
+    } else {
+      linkCorregir.hidden = true;
+      textoEl.textContent = '';
+      textoEl.className = 'oc-banner-text';
+    }
+
+    banner.hidden = !puedeResponder && !resp;
+  }
+
+  function abrirModalRespuesta(tipo) {
+    byId('oc-respuesta-titulo').textContent = tipo === 'aceptada' ? t('cotizacion.respuesta.tituloAceptar') : t('cotizacion.respuesta.tituloRechazar');
+    byId('oc-respuesta-fecha').value = OCStore.todayISO();
+    byId('oc-respuesta-motivo-wrap').hidden = tipo !== 'rechazada';
+    byId('oc-respuesta-nota').value = '';
+    byId('oc-respuesta-cancelar').textContent = t('cotizacion.confirmEmitir.cancelar');
+    byId('oc-respuesta-aceptar').textContent = tipo === 'aceptada' ? t('cotizacion.respuesta.accion.aceptar') : t('cotizacion.respuesta.accion.rechazar');
+    byId('oc-respuesta-overlay').hidden = false;
+
+    byId('oc-respuesta-aceptar').onclick = function () {
+      var fecha = byId('oc-respuesta-fecha').value || OCStore.todayISO();
+      var nota = byId('oc-respuesta-nota').value.trim();
+      byId('oc-respuesta-overlay').hidden = true;
+      try {
+        if (tipo === 'aceptada') {
+          currentCotizacion = OCStore.aceptarCotizacion(currentCotizacionId, { fecha: fecha, nota: nota });
+        } else {
+          var motivo = byId('oc-respuesta-motivo').value;
+          currentCotizacion = OCStore.rechazarCotizacion(currentCotizacionId, { fecha: fecha, motivo: motivo, nota: nota });
+        }
+      } catch (e) {
+        showFeedback(String(e.message || e), true);
+        return;
+      }
+      mostrarModoSegunEstado(currentCotizacion);
+      if (tipo === 'rechazada' && OCStore.todasCotizacionesRechazadas(currentCotizacion.proyectoId)) {
+        mostrarSugerenciaPerdido(currentCotizacion.proyectoId);
+      }
+    };
+  }
+
+  function confirmarCorregirRespuesta() {
+    abrirModalConfirmacionGenerico(
+      t('cotizacion.respuesta.corregirTitulo'),
+      t('cotizacion.respuesta.corregirTexto'),
+      t('cotizacion.respuesta.corregirConfirmar'),
+      t('cotizacion.confirmEmitir.cancelar'),
+      function () {
+        cerrarModalConfirmacion();
+        currentCotizacion = OCStore.revertirRespuesta(currentCotizacionId);
+        mostrarModoSegunEstado(currentCotizacion);
+      }
+    );
+  }
+
+  function mostrarSugerenciaPerdido(proyectoId) {
+    abrirModalConfirmacionGenerico(
+      t('proyecto.sugerenciaPerdido.titulo'),
+      t('proyecto.sugerenciaPerdido.texto'),
+      t('proyecto.menu.marcarPerdido'),
+      t('proyecto.sugerenciaPerdido.noAhora'),
+      function () {
+        cerrarModalConfirmacion();
+        OCStore.actualizarProyecto(proyectoId, { estado: 'perdido' });
+      }
+    );
+  }
+
+  function mostrarVacio() {
+    byId('oc-vista-normal').hidden = true;
+    byId('oc-vista-vacia').hidden = false;
+  }
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  function initFolderButton() {
+    var btn = byId('oc-btn-elegir-carpeta');
+    if (!window.OCPdfStore || !OCPdfStore.soportaCarpetaLocal()) {
+      return;
+    }
+    btn.hidden = false;
+    btn.addEventListener('click', function () {
+      OCPdfStore.elegirCarpeta().then(function (handle) {
+        if (handle) { showFeedback(t('cotizacion.accion.elegirCarpeta') + ' ✓'); }
+      });
+    });
+  }
+
+  function init() {
+    var params = getQueryParams();
+    byId('oc-vista-normal').hidden = false;
+
+    if (params.id) {
+      var cot = OCStore.getCotizacion(params.id);
+      if (!cot) { mostrarVacio(); return; }
+      currentCotizacionId = cot.id;
+      currentCotizacion = cot;
+      sourceSolicitudId = cot.solicitudId;
+      sourceProyectoId = cot.proyectoId;
+      mostrarModoSegunEstado(cot);
+    } else if (params.base && params.modo) {
+      var nueva = params.modo === 'adicional' ? OCStore.copiarComoAdicional(params.base) : OCStore.nuevaVersion(params.base);
+      if (!nueva) { mostrarVacio(); return; }
+      currentCotizacionId = nueva.id;
+      currentCotizacion = nueva;
+      sourceSolicitudId = nueva.solicitudId;
+      sourceProyectoId = nueva.proyectoId;
+      window.history.replaceState(null, '', '?id=' + encodeURIComponent(nueva.id));
+      mostrarModoSegunEstado(nueva);
+    } else if (params.solicitud) {
+      var sol = OCStore.getSolicitud(params.solicitud);
+      if (!sol) { mostrarVacio(); return; }
+      sourceSolicitudId = sol.id;
+      sourceProyectoId = params.proyecto || sol.proyectoId;
+      currentCotizacionId = null;
+      currentCotizacion = draftFromSolicitud(sol);
+      mostrarModoSegunEstado(currentCotizacion);
+    } else if (params.proyecto) {
+      var solDeProyecto = OCStore.getSolicitudPorProyecto(params.proyecto);
+      if (!solDeProyecto) { mostrarVacio(); return; }
+      sourceSolicitudId = solDeProyecto.id;
+      sourceProyectoId = params.proyecto;
+      currentCotizacionId = null;
+      currentCotizacion = draftFromSolicitud(solDeProyecto);
+      mostrarModoSegunEstado(currentCotizacion);
+    } else {
+      mostrarVacio();
+      return;
+    }
+
+    byId('oc-btn-add-partida').addEventListener('click', function () {
+      addPartidaRow();
+      recomputeTotales();
+    });
+    byId('cot-iva').addEventListener('input', recomputeTotales);
+    byId('cot-moneda').addEventListener('change', recomputeTotales);
+
+    byId('oc-btn-guardar-borrador').addEventListener('click', function () {
+      guardarBorrador();
+      showFeedback(t('cotizacion.aviso.guardada'));
+    });
+    byId('oc-btn-emitir').addEventListener('click', emitir);
+    byId('oc-btn-cancelar').addEventListener('click', function () { window.location.href = 'OC_MAIN.html'; });
+
+    byId('oc-confirm-aceptar').addEventListener('click', function () {
+      if (confirmHandler) { confirmHandler(); }
+    });
+    byId('oc-confirm-cancelar').addEventListener('click', cerrarModalConfirmacion);
+    byId('oc-confirm-overlay').addEventListener('click', function (e) {
+      if (e.target === byId('oc-confirm-overlay')) { cerrarModalConfirmacion(); }
+    });
+
+    byId('oc-respuesta-cancelar').addEventListener('click', function () { byId('oc-respuesta-overlay').hidden = true; });
+    byId('oc-respuesta-overlay').addEventListener('click', function (e) {
+      if (e.target === byId('oc-respuesta-overlay')) { byId('oc-respuesta-overlay').hidden = true; }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') { return; }
+      if (!byId('oc-confirm-overlay').hidden) { cerrarModalConfirmacion(); }
+      if (!byId('oc-respuesta-overlay').hidden) { byId('oc-respuesta-overlay').hidden = true; }
+    });
+
+    initFolderButton();
+  }
+
+  init();
+  OC_I18N.init();
+  document.addEventListener('oc:langchange', function () {
+    if (currentCotizacion) { recomputeTotales(); }
+  });
+})();
+</script>
+
+</body>
+</html>

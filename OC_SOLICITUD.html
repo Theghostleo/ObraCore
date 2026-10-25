@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObraCore — Solicitud de cotización</title>
+
+<!-- Única fuente externa permitida: Google Fonts (Space Grotesk para UI, IBM Plex Mono para datos/técnico) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   Archivo autocontenido a propósito (HTML+CSS+JS inline): todavía
+   no sabemos si esta pantalla vivirá como pestaña dentro de
+   OC_MAIN.html o como página aparte, así que no depende de
+   styles.css — los tokens de abajo son una copia exacta de los
+   valores que ya existen ahí, para que se vea idéntico y sea
+   trivial de mover después.
+   ============================================================ */
+:root {
+  /* Copia exacta de styles.css (dirección "Plano de ingeniería") */
+  --oc-bg: #0c1016;
+  --oc-surface: #141b24;
+  --oc-border: #24313f;
+  --oc-accent-cyan: #4dd8ff;
+  --oc-accent-gold: #f2b84b;
+  --oc-text-muted: #7d8a99;
+  --oc-text: #e8edf3;
+
+  --oc-accent-cyan-glow: rgba(77, 216, 255, 0.16);
+  --oc-accent-cyan-glow-strong: rgba(77, 216, 255, 0.32);
+  --oc-accent-cyan-border: rgba(77, 216, 255, 0.32);
+  --oc-accent-gold-glow: rgba(242, 184, 75, 0.22);
+  --oc-accent-gold-border: rgba(242, 184, 75, 0.45);
+
+  /* Alerta / error de formulario (mismo nombre que styles.css) */
+  --oc-alert: #ff6b5b;
+  --oc-alert-glow: rgba(255, 107, 91, 0.16);
+  --oc-alert-border: rgba(255, 107, 91, 0.42);
+
+  /* Completado / resultado positivo (mismo nombre que styles.css) */
+  --oc-ok: #3ddc84;
+  --oc-ok-glow: rgba(61, 220, 132, 0.18);
+  --oc-ok-border: rgba(61, 220, 132, 0.42);
+
+  --oc-grid-line: rgba(77, 216, 255, 0.035);
+
+  --oc-radius: 3px;
+  --oc-radius-panel: 4px;
+  --oc-navbar-h: 61px;
+
+  --oc-font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --oc-font-mono: 'IBM Plex Mono', Consolas, monospace;
+
+  --oc-dur-fast: 150ms;
+  --oc-dur-med: 240ms;
+  --oc-dur-slow: 300ms;
+  --oc-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: dark; /* selects/date-pickers nativos en tema oscuro */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background-color: var(--oc-bg);
+  background-image:
+    linear-gradient(var(--oc-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--oc-grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--oc-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--oc-text-muted); }
+* { scrollbar-width: thin; scrollbar-color: var(--oc-border) transparent; }
+
+/* ============================================================
+   NAVBAR — mismo look que OC_MAIN.html (logo, 4 marcadores de
+   posición); se le suma el botón de volver, junto al logo.
+   ============================================================ */
+#oc-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--oc-navbar-h);
+  display: flex;
+  align-items: center;
+  background: var(--oc-surface);
+  border-bottom: 1px solid var(--oc-border);
+  padding: 0 24px;
+  gap: 24px;
+}
+
+#oc-logo {
+  font-family: var(--oc-font-mono);
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--oc-text);
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+#oc-logo span {
+  color: var(--oc-accent-gold);
+}
+
+#oc-back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+#oc-back-link:hover {
+  color: var(--oc-text);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--oc-border);
+}
+
+#oc-nav-sections {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0 0 0 12px;
+  padding: 0;
+  height: 100%;
+}
+#oc-nav-sections li { display: flex; align-items: center; }
+#oc-nav-sections button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 7px 17px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+#oc-nav-sections button:hover {
+  color: var(--oc-text);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--oc-border);
+}
+
+/* ============================================================
+   CONTENIDO — formulario de una columna, centrado
+   ============================================================ */
+#oc-solicitud-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+.oc-page-title {
+  font-family: var(--oc-font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin: 0 0 24px;
+}
+
+.oc-card {
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius-panel);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.oc-card-title {
+  font-family: var(--oc-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--oc-text-muted);
+  margin: 0 0 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--oc-border);
+}
+
+.oc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.oc-field:last-child {
+  margin-bottom: 0;
+}
+.oc-field label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oc-text-muted);
+}
+.oc-field-hint {
+  font-size: 12px;
+  color: var(--oc-text-muted);
+  opacity: 0.8;
+}
+
+.oc-input, select.oc-input, textarea.oc-input {
+  width: 100%;
+  background: var(--oc-bg);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  padding: 9px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-input::placeholder {
+  color: var(--oc-text-muted);
+  opacity: 0.7;
+}
+.oc-input:focus {
+  outline: none;
+  border-color: var(--oc-accent-cyan);
+  box-shadow: 0 0 0 3px var(--oc-accent-cyan-glow);
+}
+.oc-input[readonly] {
+  color: var(--oc-text-muted);
+  cursor: default;
+}
+#dg-fecha-solicitud {
+  font-family: var(--oc-font-mono);
+}
+textarea.oc-input {
+  resize: vertical;
+  min-height: 80px;
+  font-family: var(--oc-font-ui);
+}
+.oc-input.oc-input-error {
+  border-color: var(--oc-alert);
+  box-shadow: 0 0 0 3px var(--oc-alert-glow);
+}
+
+/* Toggle tipo "pill" para Persona física / Empresa — mismo lenguaje
+   visual que el selector de idioma del navbar principal. */
+.oc-toggle {
+  position: relative;
+  display: inline-flex;
+  border: 1px solid var(--oc-border);
+  border-radius: 999px;
+  overflow: hidden;
+  width: fit-content;
+}
+.oc-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.oc-toggle label {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.oc-toggle label:last-of-type {
+  border-left: 1px solid var(--oc-border);
+}
+.oc-toggle input:checked + label {
+  color: var(--oc-accent-cyan);
+  background: var(--oc-accent-cyan-glow);
+}
+
+/* Documentos: cada renglón es Nombre + URL + Eliminar */
+.oc-doc-row {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+.oc-doc-row .oc-field {
+  margin-bottom: 0;
+}
+
+.oc-form-error {
+  color: var(--oc-alert);
+  font-size: 13px;
+  margin: 4px 0 14px;
+}
+.oc-form-error[hidden] {
+  display: none;
+}
+
+/* ============================================================
+   BOTONES
+   ============================================================ */
+.oc-btn {
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--oc-radius);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.oc-btn-primary {
+  background: var(--oc-accent-gold-glow);
+  border: 1px solid var(--oc-accent-gold);
+  color: var(--oc-accent-gold);
+}
+.oc-btn-primary:hover {
+  box-shadow: 0 0 10px var(--oc-accent-gold-glow);
+}
+
+.oc-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+}
+.oc-btn-secondary:hover {
+  color: var(--oc-text);
+  border-color: var(--oc-text-muted);
+}
+
+.oc-btn-remove {
+  font-family: var(--oc-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 14px;
+  border-radius: var(--oc-radius);
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.oc-btn-remove:hover {
+  color: var(--oc-alert);
+  border-color: var(--oc-alert);
+}
+
+.oc-btn-add {
+  background: transparent;
+  border: 1px dashed var(--oc-border);
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 14px;
+  border-radius: var(--oc-radius);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.oc-btn-add:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan);
+}
+
+.oc-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+#oc-save-feedback {
+  font-size: 13px;
+  font-family: var(--oc-font-mono);
+  color: var(--oc-accent-cyan);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--oc-dur-slow) ease, transform var(--oc-dur-slow) var(--oc-ease-out);
+}
+#oc-save-feedback.oc-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ============================================================
+   FOCO VISIBLE (teclado) y MOVIMIENTO (obracore-motion)
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid var(--oc-accent-cyan);
+  outline-offset: 2px;
+}
+.oc-input:focus-visible,
+select.oc-input:focus-visible {
+  outline: none; /* foco de inputs: borde + glow en .oc-input:focus */
+}
+
+@keyframes oc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes oc-pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.oc-card {
+  animation: oc-fade-in var(--oc-dur-med) ease both;
+}
+.oc-modal {
+  animation: oc-pop-in var(--oc-dur-med) var(--oc-ease-out) both;
+}
+.oc-modal-overlay {
+  animation: oc-fade-in var(--oc-dur-med) ease both;
+}
+
+/* Con reduced-motion todo aparece en su estado final */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<header id="oc-navbar">
+  <a href="OC_MAIN.html" id="oc-back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    Volver al calendario
+  </a>
+  <div id="oc-logo">Obra<span>Core</span></div>
+
+  <!-- Mismos 4 marcadores de posición que OC_MAIN.html, solo por consistencia visual -->
+  <ul id="oc-nav-sections">
+    <li><button type="button" data-nav="primero">Primero</button></li>
+    <li><button type="button" data-nav="segundo">Segundo</button></li>
+    <li><button type="button" data-nav="tercero">Tercero</button></li>
+    <li><button type="button" data-nav="cuarto">Cuarto</button></li>
+  </ul>
+</header>
+
+<main id="oc-solicitud-main">
+  <h1 class="oc-page-title">Solicitud de cotización</h1>
+
+  <form id="oc-solicitud-form" novalidate>
+
+    <!-- ============================================================
+         1. DATOS GENERALES
+         ============================================================ -->
+    <section class="oc-card">
+      <h2 class="oc-card-title">Datos generales</h2>
+
+      <div class="oc-field">
+        <label for="dg-nombre">Nombre o razón social</label>
+        <input type="text" id="dg-nombre" class="oc-input">
+      </div>
+
+      <div class="oc-field">
+        <label>Tipo de cliente</label>
+        <div class="oc-toggle">
+          <input type="radio" name="tipoCliente" id="dg-tipo-persona" value="persona-fisica" checked>
+          <label for="dg-tipo-persona">Persona física</label>
+          <input type="radio" name="tipoCliente" id="dg-tipo-empresa" value="empresa">
+          <label for="dg-tipo-empresa">Empresa</label>
+        </div>
+      </div>
+
+      <div class="oc-field">
+        <label for="dg-telefono">Teléfono</label>
+        <input type="tel" id="dg-telefono" class="oc-input">
+      </div>
+
+      <div class="oc-field">
+        <label for="dg-correo">Correo electrónico</label>
+        <input type="email" id="dg-correo" class="oc-input">
+      </div>
+
+      <div class="oc-field">
+        <label for="dg-direccion">Dirección del proyecto</label>
+        <input type="text" id="dg-direccion" class="oc-input">
+      </div>
+
+      <div class="oc-field">
+        <label for="dg-fuente">Fuente del lead</label>
+        <select id="dg-fuente" class="oc-input">
+          <option value="referido">Referido</option>
+          <option value="redes-sociales">Redes sociales</option>
+          <option value="pagina-web">Página web</option>
+          <option value="llamada-directa">Llamada directa</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+
+      <div class="oc-field">
+        <label for="dg-asesor">Asesor asignado</label>
+        <input type="text" id="dg-asesor" class="oc-input" placeholder="Nombre del asesor">
+      </div>
+
+      <div class="oc-field">
+        <label for="dg-fecha-solicitud">Fecha de la solicitud</label>
+        <input type="text" id="dg-fecha-solicitud" class="oc-input" readonly>
+        <span class="oc-field-hint">Viene del día del calendario donde se dio clic (o de hoy, si esta página se abre directo).</span>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         2. DATOS DEL PROYECTO
+         ============================================================ -->
+    <section class="oc-card">
+      <h2 class="oc-card-title">Datos del proyecto</h2>
+
+      <div class="oc-field">
+        <label for="dp-tipo">Tipo de proyecto</label>
+        <!-- Opciones generadas por JS desde OCStore.TIPOS_PROYECTO (ver
+             poblarSelectTipoProyecto más abajo) — no se escriben a mano
+             aquí para que un tipo nuevo solo se agregue en store.js. -->
+        <select id="dp-tipo" class="oc-input"></select>
+      </div>
+
+      <div class="oc-field">
+        <label for="dp-descripcion">Descripción de lo que busca el cliente</label>
+        <textarea id="dp-descripcion" class="oc-input"></textarea>
+      </div>
+
+      <div class="oc-field">
+        <label for="dp-fecha-deseada">Fecha deseada de instalación</label>
+        <input type="date" id="dp-fecha-deseada" class="oc-input">
+      </div>
+
+      <div class="oc-field">
+        <label for="dp-presupuesto">Presupuesto estimado</label>
+        <input type="number" id="dp-presupuesto" class="oc-input" placeholder="Opcional" min="0" step="1">
+      </div>
+    </section>
+
+    <!-- ============================================================
+         3. DOCUMENTOS
+         ============================================================ -->
+    <section class="oc-card">
+      <h2 class="oc-card-title">Documentos</h2>
+
+      <p id="oc-doc-error" class="oc-form-error" hidden>Todas las URLs deben empezar con http:// o https://</p>
+
+      <div id="oc-doc-list"></div>
+
+      <button type="button" id="oc-btn-add-doc" class="oc-btn-add">+ Agregar otro documento</button>
+    </section>
+
+    <!-- ============================================================
+         4. SEGUIMIENTO
+         ============================================================ -->
+    <section class="oc-card">
+      <h2 class="oc-card-title">Seguimiento</h2>
+
+      <div class="oc-field">
+        <label for="sg-estado">Estado de la solicitud</label>
+        <select id="sg-estado" class="oc-input">
+          <option value="pendiente" selected data-i18n="solicitud.estado.pendiente">Pendiente</option>
+          <option value="en_cotizacion" data-i18n="solicitud.estado.en_cotizacion">En cotización</option>
+          <option value="cotizada" data-i18n="solicitud.estado.cotizada">Cotizada</option>
+          <option value="aceptada" data-i18n="solicitud.estado.aceptada">Aceptada</option>
+          <option value="rechazada" data-i18n="solicitud.estado.rechazada">Rechazada</option>
+          <option value="cancelada" data-i18n="solicitud.estado.cancelada">Cancelada</option>
+        </select>
+      </div>
+
+      <div class="oc-field">
+        <label for="sg-notas">Notas internas del equipo</label>
+        <textarea id="sg-notas" class="oc-input"></textarea>
+      </div>
+
+      <div class="oc-field">
+        <label for="sg-proxima-fecha">Próxima fecha de seguimiento</label>
+        <input type="date" id="sg-proxima-fecha" class="oc-input">
+      </div>
+    </section>
+
+    <div class="oc-form-actions">
+      <button type="submit" class="oc-btn oc-btn-primary">Guardar solicitud</button>
+      <button type="button" id="oc-btn-cancelar" class="oc-btn oc-btn-secondary">Cancelar</button>
+      <span id="oc-save-feedback">Guardado — revisa la consola</span>
+    </div>
+
+  </form>
+</main>
+
+<script src="store.js"></script>
+<script src="i18n.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  // Id de la solicitud que se está editando (viene de ?id=). null =
+  // se está creando una solicitud nueva; el botón Guardar decide entre
+  // OCStore.crearSolicitud / OCStore.actualizarSolicitud según esto.
+  var currentSolicitudId = null;
+
+  // Proyecto dueño de esta solicitud (viene de ?proyecto= o de la
+  // solicitud ya existente). Si sigue null al guardar, crearSolicitud()
+  // crea el proyecto automáticamente.
+  var currentProyectoId = null;
+
+  function getQueryParams() {
+    var params = {};
+    window.location.search.replace(/^\?/, '').split('&').forEach(function (pair) {
+      if (!pair) {
+        return;
+      }
+      var idx = pair.indexOf('=');
+      var key = decodeURIComponent(idx === -1 ? pair : pair.slice(0, idx));
+      var value = idx === -1 ? '' : decodeURIComponent(pair.slice(idx + 1));
+      params[key] = value;
+    });
+    return params;
+  }
+
+  function pad2(n) {
+    return n < 10 ? '0' + n : '' + n;
+  }
+
+  function todayISOLocal() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  /* ============================================================
+     FECHA DE LA SOLICITUD — de solo lectura. Por default es hoy;
+     si se llega desde el calendario (?fecha=YYYY-MM-DD) o editando
+     una solicitud existente, se usa esa fecha en su lugar.
+     Guarda el ISO en un data-attribute para el payload; el input
+     muestra la versión larga en español.
+     ============================================================ */
+  function setFechaSolicitud(iso) {
+    var input = byId('dg-fecha-solicitud');
+    var parts = iso.split('-').map(Number);
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    input.dataset.iso = iso;
+    input.value = d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  /* ============================================================
+     DOCUMENTOS — renglones dinámicos (Nombre + URL + Eliminar)
+     ============================================================ */
+  var DOC_PRELOAD = ['Recibo de luz / CFE', 'Identificación oficial', 'Fotos del sitio'];
+
+  function validateUrlField(input) {
+    var val = input.value.trim();
+    var invalid = val !== '' && !/^https?:\/\//i.test(val);
+    input.classList.toggle('oc-input-error', invalid);
+    return !invalid;
+  }
+
+  function addDocRow(nombreValue, urlValue) {
+    var row = document.createElement('div');
+    row.className = 'oc-doc-row';
+
+    var nombreField = document.createElement('div');
+    nombreField.className = 'oc-field';
+    var nombreLabel = document.createElement('label');
+    nombreLabel.textContent = 'Nombre del documento';
+    var nombreInput = document.createElement('input');
+    nombreInput.type = 'text';
+    nombreInput.className = 'oc-input oc-doc-nombre';
+    nombreInput.value = nombreValue || '';
+    nombreField.appendChild(nombreLabel);
+    nombreField.appendChild(nombreInput);
+
+    var urlField = document.createElement('div');
+    urlField.className = 'oc-field';
+    var urlLabel = document.createElement('label');
+    urlLabel.textContent = 'URL';
+    var urlInput = document.createElement('input');
+    urlInput.type = 'text';
+    urlInput.className = 'oc-input oc-doc-url';
+    urlInput.placeholder = 'https://...';
+    urlInput.value = urlValue || '';
+    urlInput.addEventListener('blur', function () { validateUrlField(urlInput); });
+    urlInput.addEventListener('input', function () {
+      if (urlInput.classList.contains('oc-input-error')) {
+        validateUrlField(urlInput);
+      }
+    });
+    urlField.appendChild(urlLabel);
+    urlField.appendChild(urlInput);
+
+    var removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'oc-btn-remove';
+    removeBtn.textContent = 'Eliminar';
+    removeBtn.addEventListener('click', function () {
+      row.parentNode.removeChild(row);
+    });
+
+    row.appendChild(nombreField);
+    row.appendChild(urlField);
+    row.appendChild(removeBtn);
+
+    byId('oc-doc-list').appendChild(row);
+  }
+
+  // list: [{nombre, url}] de una solicitud existente, o null/[] para
+  // arrancar con la precarga de siempre (modo creación).
+  function loadDocumentRows(list) {
+    byId('oc-doc-list').innerHTML = '';
+    if (list && list.length) {
+      list.forEach(function (doc) { addDocRow(doc.nombre, doc.url); });
+    } else {
+      DOC_PRELOAD.forEach(function (nombre) { addDocRow(nombre, ''); });
+    }
+  }
+
+  function initDocumentos() {
+    byId('oc-btn-add-doc').addEventListener('click', function () { addDocRow('', ''); });
+  }
+
+  /* ============================================================
+     PRECARGA — llega desde OC_MAIN vía ?proyecto= (principal), ?id=
+     (abre una solicitud existente directo) y/o ?fecha= (solo prellena
+     el campo fecha en modo creación; ya no es llave de nada).
+     ============================================================ */
+  // Opciones de "Tipo de proyecto": vienen de OCStore.TIPOS_PROYECTO (no
+  // se escriben a mano en el HTML), para que agregar un giro nuevo solo
+  // toque store.js. Se repuebla en oc:langchange conservando la
+  // selección actual, ya que reemplazar las <option> resetea el valor.
+  function poblarSelectTipoProyecto() {
+    if (!window.OCStore) {
+      return;
+    }
+    var select = byId('dp-tipo');
+    var valorActual = select.value;
+    var lang = OC_I18N.getLang();
+    select.innerHTML = '';
+    OCStore.TIPOS_PROYECTO.forEach(function (tp) {
+      var option = document.createElement('option');
+      option.value = tp.id;
+      option.textContent = tp.nombre[lang] || tp.nombre.es;
+      select.appendChild(option);
+    });
+    if (valorActual) {
+      select.value = valorActual;
+    }
+  }
+
+  function populateForm(sol) {
+    setFechaSolicitud(sol.fechaSolicitud);
+
+    var g = sol.generales || {};
+    byId('dg-nombre').value = g.nombreRazonSocial || '';
+    byId(g.tipoCliente === 'empresa' ? 'dg-tipo-empresa' : 'dg-tipo-persona').checked = true;
+    byId('dg-telefono').value = g.telefono || '';
+    byId('dg-correo').value = g.correo || '';
+    byId('dg-direccion').value = g.direccionProyecto || '';
+    if (g.fuenteLead) {
+      byId('dg-fuente').value = g.fuenteLead;
+    }
+    byId('dg-asesor').value = g.asesorAsignado || '';
+
+    var p = sol.detalleProyecto || {};
+    if (p.tipoProyecto) {
+      byId('dp-tipo').value = p.tipoProyecto;
+    }
+    byId('dp-descripcion').value = p.descripcion || '';
+    byId('dp-fecha-deseada').value = p.fechaDeseadaInstalacion || '';
+    byId('dp-presupuesto').value = (p.presupuestoEstimado === null || p.presupuestoEstimado === undefined) ? '' : p.presupuestoEstimado;
+
+    loadDocumentRows(sol.documentos);
+
+    byId('sg-estado').value = sol.estado || 'pendiente';
+    var s = sol.seguimiento || {};
+    byId('sg-notas').value = s.notasInternas || '';
+    byId('sg-proxima-fecha').value = s.proximaFechaSeguimiento || '';
+  }
+
+  function initFromQuery() {
+    var params = getQueryParams();
+
+    if (params.id && window.OCStore) {
+      var existing = OCStore.getSolicitud(params.id);
+      if (existing) {
+        currentSolicitudId = existing.id;
+        currentProyectoId = existing.proyectoId;
+        populateForm(existing);
+        return;
+      }
+      // id inválido/inexistente: cae al modo creación de abajo.
+    }
+
+    if (params.proyecto && window.OCStore) {
+      currentProyectoId = params.proyecto;
+      var sol = OCStore.getSolicitudPorProyecto(params.proyecto);
+      if (sol) {
+        currentSolicitudId = sol.id;
+        populateForm(sol);
+        return;
+      }
+      // El proyecto existe pero todavía no tiene solicitud: sigue en
+      // modo creación, ya con currentProyectoId fijado arriba.
+    }
+
+    setFechaSolicitud(params.fecha || todayISOLocal());
+    loadDocumentRows(null);
+  }
+
+  /* ============================================================
+     ENVÍO DEL FORMULARIO — placeholder: solo arma el objeto y lo
+     manda a consola, como referencia exacta de qué se le mandará
+     al backend cuando exista.
+     ============================================================ */
+  function showSaveFeedback(wasUpdate) {
+    var el = byId('oc-save-feedback');
+    el.textContent = OC_I18N.t(wasUpdate ? 'solicitud.guardada.actualizada' : 'solicitud.guardada.creada');
+    el.classList.add('oc-visible');
+    setTimeout(function () { el.classList.remove('oc-visible'); }, 2500);
+  }
+
+  function collectDocumentos() {
+    var rows = Array.prototype.slice.call(document.querySelectorAll('.oc-doc-row'));
+    var allValid = true;
+    rows.forEach(function (row) {
+      var urlInput = row.querySelector('.oc-doc-url');
+      if (!validateUrlField(urlInput)) {
+        allValid = false;
+      }
+    });
+
+    var docs = rows.map(function (row) {
+      return {
+        nombre: row.querySelector('.oc-doc-nombre').value.trim(),
+        url: row.querySelector('.oc-doc-url').value.trim()
+      };
+    });
+
+    return { docs: docs, allValid: allValid };
+  }
+
+  function initForm() {
+    var form = byId('oc-solicitud-form');
+    var docError = byId('oc-doc-error');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var docsResult = collectDocumentos();
+      if (!docsResult.allValid) {
+        docError.hidden = false;
+        return;
+      }
+      docError.hidden = true;
+
+      var presupuestoRaw = byId('dp-presupuesto').value;
+      var tipoClienteInput = document.querySelector('input[name="tipoCliente"]:checked');
+
+      var datos = {
+        proyectoId: currentProyectoId || undefined,
+        fechaSolicitud: byId('dg-fecha-solicitud').dataset.iso,
+        estado: byId('sg-estado').value,
+        generales: {
+          nombreRazonSocial: byId('dg-nombre').value.trim(),
+          tipoCliente: tipoClienteInput ? tipoClienteInput.value : '',
+          telefono: byId('dg-telefono').value.trim(),
+          correo: byId('dg-correo').value.trim(),
+          direccionProyecto: byId('dg-direccion').value.trim(),
+          fuenteLead: byId('dg-fuente').value,
+          asesorAsignado: byId('dg-asesor').value.trim()
+        },
+        detalleProyecto: {
+          tipoProyecto: byId('dp-tipo').value,
+          descripcion: byId('dp-descripcion').value.trim(),
+          fechaDeseadaInstalacion: byId('dp-fecha-deseada').value,
+          presupuestoEstimado: presupuestoRaw === '' ? null : Number(presupuestoRaw)
+        },
+        documentos: docsResult.docs,
+        seguimiento: {
+          notasInternas: byId('sg-notas').value.trim(),
+          proximaFechaSeguimiento: byId('sg-proxima-fecha').value
+        }
+      };
+
+      var wasUpdate = !!currentSolicitudId;
+      var saved = wasUpdate ?
+        OCStore.actualizarSolicitud(currentSolicitudId, datos) :
+        OCStore.crearSolicitud(datos);
+
+      if (!wasUpdate) {
+        currentSolicitudId = saved.id;
+        currentProyectoId = saved.proyectoId;
+        // Para que un segundo "Guardar" actualice en vez de crear otra,
+        // y para que recargar la página no pierda de vista cuál es.
+        var newSearch = '?proyecto=' + encodeURIComponent(saved.proyectoId) + '&id=' + encodeURIComponent(saved.id);
+        window.history.replaceState(null, '', newSearch);
+      }
+
+      console.log('[ObraCore] Solicitud de cotización — guardada:', saved);
+      showSaveFeedback(wasUpdate);
+    });
+
+    byId('oc-btn-cancelar').addEventListener('click', function () {
+      window.location.href = 'OC_MAIN.html';
+    });
+  }
+
+  poblarSelectTipoProyecto();
+  document.addEventListener('oc:langchange', poblarSelectTipoProyecto);
+
+  initDocumentos();
+  initFromQuery();
+  initForm();
+  OC_I18N.init();
+})();
+</script>
+
+</body>
+</html>

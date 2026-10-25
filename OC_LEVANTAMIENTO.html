@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObraCore — Levantamiento técnico</title>
+
+<!-- Única fuente externa permitida: Google Fonts (Space Grotesk para UI, IBM Plex Mono para datos/técnico) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   Archivo autocontenido a propósito (HTML+CSS+JS inline), mismo
+   motivo que OC_SOLICITUD.html/OC_COTIZACION.html: los tokens de
+   abajo son copia exacta de styles.css. El bloque de componentes de
+   OCForms (tabla editable, checklist, galería de fotos, número con
+   unidad, coordenadas) es NUEVO — ver la skill obracore-form-templates
+   antes de copiarlo a otra pantalla de etapa.
+   ============================================================ */
+:root {
+  --oc-bg: #0c1016;
+  --oc-surface: #141b24;
+  --oc-border: #24313f;
+  --oc-accent-cyan: #4dd8ff;
+  --oc-accent-gold: #f2b84b;
+  --oc-text-muted: #7d8a99;
+  --oc-text: #e8edf3;
+
+  --oc-accent-cyan-glow: rgba(77, 216, 255, 0.16);
+  --oc-accent-cyan-glow-strong: rgba(77, 216, 255, 0.32);
+  --oc-accent-cyan-border: rgba(77, 216, 255, 0.32);
+  --oc-accent-gold-glow: rgba(242, 184, 75, 0.22);
+  --oc-accent-gold-border: rgba(242, 184, 75, 0.45);
+
+  --oc-alert: #ff6b5b;
+  --oc-alert-glow: rgba(255, 107, 91, 0.16);
+  --oc-alert-border: rgba(255, 107, 91, 0.42);
+
+  --oc-ok: #3ddc84;
+  --oc-ok-glow: rgba(61, 220, 132, 0.18);
+  --oc-ok-border: rgba(61, 220, 132, 0.42);
+
+  --oc-grid-line: rgba(77, 216, 255, 0.035);
+
+  --oc-radius: 3px;
+  --oc-radius-panel: 4px;
+  --oc-navbar-h: 61px;
+
+  --oc-font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --oc-font-mono: 'IBM Plex Mono', Consolas, monospace;
+
+  --oc-dur-fast: 150ms;
+  --oc-dur-med: 240ms;
+  --oc-dur-slow: 300ms;
+  --oc-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background-color: var(--oc-bg);
+  background-image:
+    linear-gradient(var(--oc-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--oc-grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--oc-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--oc-text-muted); }
+* { scrollbar-width: thin; scrollbar-color: var(--oc-border) transparent; }
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+#oc-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--oc-navbar-h);
+  display: flex;
+  align-items: center;
+  background: var(--oc-surface);
+  border-bottom: 1px solid var(--oc-border);
+  padding: 0 24px;
+  gap: 24px;
+}
+#oc-logo {
+  font-family: var(--oc-font-mono);
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--oc-text);
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+#oc-logo span { color: var(--oc-accent-gold); }
+#oc-back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+#oc-back-link:hover {
+  color: var(--oc-text);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--oc-border);
+}
+#oc-nav-sections {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0 0 0 12px;
+  padding: 0;
+  height: 100%;
+}
+#oc-nav-sections li { display: flex; align-items: center; }
+#oc-nav-sections button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 7px 17px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+#oc-nav-sections button:hover {
+  color: var(--oc-text);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--oc-border);
+}
+
+/* ============================================================
+   CONTENIDO
+   ============================================================ */
+#oc-levantamiento-main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 20px 100px;
+}
+
+.oc-page-title {
+  font-family: var(--oc-font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin: 0 0 6px;
+}
+.oc-page-subtitle {
+  font-family: var(--oc-font-mono);
+  font-size: 13px;
+  color: var(--oc-text-muted);
+  margin: 0 0 20px;
+  min-height: 16px;
+}
+
+#oc-plantilla-aviso {
+  font-size: 12px;
+  color: var(--oc-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--oc-border);
+  border-radius: var(--oc-radius);
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+#oc-plantilla-aviso[hidden] { display: none; }
+
+#oc-error-general {
+  color: var(--oc-alert);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+#oc-error-general[hidden] { display: none; }
+
+.oc-card {
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius-panel);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.oc-card-title {
+  font-family: var(--oc-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--oc-text-muted);
+  margin: 0 0 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--oc-border);
+}
+
+.oc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.oc-field:last-child { margin-bottom: 0; }
+.oc-field label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oc-text-muted);
+}
+.oc-field-hint {
+  font-size: 12px;
+  color: var(--oc-text-muted);
+  opacity: 0.8;
+}
+
+.oc-input, select.oc-input, textarea.oc-input {
+  width: 100%;
+  background: var(--oc-bg);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  padding: 9px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-input::placeholder { color: var(--oc-text-muted); opacity: 0.7; }
+.oc-input:focus {
+  outline: none;
+  border-color: var(--oc-accent-cyan);
+  box-shadow: 0 0 0 3px var(--oc-accent-cyan-glow);
+}
+.oc-input:disabled, select.oc-input:disabled, textarea.oc-input:disabled {
+  color: var(--oc-text-muted);
+  cursor: default;
+  opacity: 0.7;
+}
+textarea.oc-input { resize: vertical; min-height: 70px; font-family: var(--oc-font-ui); }
+.oc-input.oc-input-error { border-color: var(--oc-alert); box-shadow: 0 0 0 3px var(--oc-alert-glow); }
+.oc-input-mono { font-family: var(--oc-font-mono); }
+
+.oc-form-error { color: var(--oc-alert); font-size: 12px; margin: 4px 0 0; }
+.oc-form-error[hidden] { display: none; }
+/* .oc-field tiene la misma especificidad que [hidden]; sin esto un
+   campo oculto por visibleSi (ver forms.js aplicarVisibilidad) se ve
+   igual aunque esté "hidden" (mismo bug ya encontrado en .oc-banner).
+   Cualquier pantalla nueva que use OCForms necesita esta misma regla
+   (ver skill obracore-form-templates). */
+.oc-field[hidden] { display: none; }
+
+/* Toggle tipo "pill" (siNo) — mismo lenguaje visual que el selector
+   ES/EN del navbar principal. */
+.oc-toggle {
+  position: relative;
+  display: inline-flex;
+  border: 1px solid var(--oc-border);
+  border-radius: 999px;
+  overflow: hidden;
+  width: fit-content;
+}
+.oc-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.oc-toggle label {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.oc-toggle label:last-of-type { border-left: 1px solid var(--oc-border); }
+.oc-toggle input:checked + label { color: var(--oc-accent-cyan); background: var(--oc-accent-cyan-glow); }
+.oc-toggle input:disabled + label { cursor: default; opacity: 0.7; }
+
+/* ============================================================
+   COMPONENTES NUEVOS DE OCForms — copiar este bloque completo a
+   cualquier pantalla de etapa nueva que use forms.js (ver skill
+   obracore-form-templates).
+   ============================================================ */
+.oc-input-numero-unidad { display: flex; align-items: center; gap: 8px; }
+.oc-input-numero-unidad .oc-input { font-family: var(--oc-font-mono); }
+.oc-input-unidad { font-family: var(--oc-font-mono); font-size: 12px; color: var(--oc-text-muted); white-space: nowrap; }
+
+.oc-coordenadas-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.oc-coordenadas-row .oc-input { max-width: 150px; font-family: var(--oc-font-mono); }
+.oc-btn-ubicacion { white-space: nowrap; }
+
+.oc-opcion-multiple { display: flex; flex-wrap: wrap; gap: 14px; }
+.oc-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--oc-text); cursor: pointer; }
+.oc-checkbox-label input { accent-color: var(--oc-accent-cyan); }
+
+.oc-field-tabla .oc-tabla-editable {
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.oc-tabla-fila { display: flex; gap: 8px; padding: 8px 10px; align-items: center; }
+.oc-tabla-fila > * { flex: 1; min-width: 0; }
+.oc-tabla-fila > .oc-btn-remove { flex: 0 0 auto; }
+.oc-tabla-head {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--oc-border);
+}
+.oc-tabla-head > span {
+  font-family: var(--oc-font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--oc-text-muted);
+}
+.oc-tabla-head > span:last-child { flex: 0 0 32px; }
+.oc-tabla-filas .oc-tabla-fila:not(:last-child) { border-bottom: 1px solid var(--oc-border); }
+.oc-tabla-fila .oc-input { font-size: 13px; padding: 6px 8px; }
+.oc-tabla-totales {
+  font-family: var(--oc-font-mono);
+  font-weight: 600;
+  color: var(--oc-accent-gold);
+  border-top: 1px solid var(--oc-border);
+  background: rgba(242, 184, 75, 0.06);
+}
+.oc-tabla-totales[hidden] { display: none; }
+
+.oc-field-checklist { display: flex; flex-direction: column; }
+.oc-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--oc-border);
+  flex-wrap: wrap;
+}
+.oc-checklist-item:last-child { border-bottom: none; }
+.oc-checklist-item-label { flex: 1 1 160px; font-size: 13px; }
+.oc-checklist-estados { display: flex; gap: 4px; }
+.oc-checklist-btn {
+  font-family: var(--oc-font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--oc-radius);
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.oc-checklist-btn--ok.oc-activo { color: var(--oc-ok); border-color: var(--oc-ok); background: var(--oc-ok-glow); }
+.oc-checklist-btn--no-ok.oc-activo { color: var(--oc-alert); border-color: var(--oc-alert); background: var(--oc-alert-glow); }
+.oc-checklist-btn--n-a.oc-activo { color: var(--oc-text-muted); border-color: var(--oc-text-muted); background: rgba(255, 255, 255, 0.05); }
+.oc-checklist-nota { flex: 1 1 160px; }
+
+.oc-field-fotos .oc-fotos-galeria { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.oc-foto-thumb { width: 150px; display: flex; flex-direction: column; gap: 6px; }
+.oc-foto-thumb img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--oc-radius);
+  border: 1px solid var(--oc-border);
+  cursor: pointer;
+  background: var(--oc-bg);
+}
+.oc-foto-categoria, .oc-foto-nota { font-size: 12px; padding: 6px 8px; }
+.oc-btn-add-foto { display: inline-flex; align-items: center; cursor: pointer; position: relative; }
+.oc-input-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* ============================================================
+   BOTONES
+   ============================================================ */
+.oc-btn {
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--oc-radius);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-btn-primary {
+  background: var(--oc-accent-gold-glow);
+  border: 1px solid var(--oc-accent-gold);
+  color: var(--oc-accent-gold);
+}
+.oc-btn-primary:hover { box-shadow: 0 0 10px var(--oc-accent-gold-glow); }
+.oc-btn-primary:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+.oc-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+}
+.oc-btn-secondary:hover { color: var(--oc-text); border-color: var(--oc-text-muted); }
+.oc-btn-remove {
+  font-family: var(--oc-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 11px;
+  border-radius: var(--oc-radius);
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.oc-btn-remove:hover { color: var(--oc-alert); border-color: var(--oc-alert); }
+.oc-btn-add {
+  background: transparent;
+  border: 1px dashed var(--oc-border);
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 14px;
+  border-radius: var(--oc-radius);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.oc-btn-add:hover { color: var(--oc-accent-cyan); border-color: var(--oc-accent-cyan); }
+
+.oc-form-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+
+#oc-save-feedback, #oc-cambios-banner {
+  font-size: 12px;
+  font-family: var(--oc-font-mono);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--oc-dur-slow) ease, transform var(--oc-dur-slow) var(--oc-ease-out);
+}
+#oc-save-feedback { color: var(--oc-accent-cyan); }
+#oc-cambios-banner { color: var(--oc-accent-gold); }
+#oc-save-feedback.oc-visible, #oc-cambios-banner.oc-visible { opacity: 1; transform: none; }
+
+/* ---- Banner de solo-lectura (levantamiento ya completado) ---- */
+.oc-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  background: var(--oc-surface); border: 1px solid var(--oc-ok-border); border-radius: var(--oc-radius-panel);
+  padding: 14px 20px; margin-bottom: 20px;
+}
+.oc-banner[hidden] { display: none; }
+.oc-banner-text { font-size: 13px; color: var(--oc-ok); font-weight: 600; }
+.oc-banner-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ---- Modal de confirmación (nunca confirm() nativo) ---- */
+.oc-modal-overlay {
+  position: fixed; inset: 0; background: rgba(6, 7, 10, 0.6); z-index: 700;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.oc-modal-overlay[hidden] { display: none; }
+.oc-modal {
+  background: var(--oc-surface); border: 1px solid var(--oc-border); border-radius: var(--oc-radius-panel);
+  padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.oc-modal h3 { margin: 0 0 10px; font-family: var(--oc-font-mono); font-size: 16px; }
+.oc-modal p { margin: 0 0 20px; font-size: 13px; color: var(--oc-text-muted); line-height: 1.5; }
+.oc-modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+/* ============================================================
+   FOCO VISIBLE y MOVIMIENTO (obracore-motion)
+   ============================================================ */
+:focus-visible { outline: 2px solid var(--oc-accent-cyan); outline-offset: 2px; }
+.oc-input:focus-visible, select.oc-input:focus-visible { outline: none; }
+
+@keyframes oc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes oc-pop-in { from { opacity: 0; transform: translateY(4px) scale(0.97); } to { opacity: 1; transform: none; } }
+.oc-card { animation: oc-fade-in var(--oc-dur-med) ease both; }
+.oc-modal { animation: oc-pop-in var(--oc-dur-med) var(--oc-ease-out) both; }
+.oc-modal-overlay { animation: oc-fade-in var(--oc-dur-med) ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Vista de tablet: una sola columna ya es responsiva por defecto
+   (max-width: 760px), pero las filas de tabla/checklist se apilan
+   antes de los 768px para que las celdas sigan siendo usables. */
+@media (max-width: 768px) {
+  .oc-tabla-fila { flex-wrap: wrap; }
+  .oc-tabla-head { display: none; }
+  .oc-coordenadas-row .oc-input { max-width: none; flex: 1 1 100px; }
+}
+</style>
+</head>
+<body>
+
+<header id="oc-navbar">
+  <a href="OC_MAIN.html" id="oc-back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    <span data-i18n="cotizacion.accion.volver">Volver al calendario</span>
+  </a>
+  <div id="oc-logo">Obra<span>Core</span></div>
+
+  <ul id="oc-nav-sections">
+    <li><button type="button" data-nav="primero">Primero</button></li>
+    <li><button type="button" data-nav="segundo">Segundo</button></li>
+    <li><button type="button" data-nav="tercero">Tercero</button></li>
+    <li><button type="button" data-nav="cuarto">Cuarto</button></li>
+  </ul>
+</header>
+
+<main id="oc-levantamiento-main">
+  <h1 class="oc-page-title" data-i18n="stage.levantamiento-tecnico">Levantamiento técnico</h1>
+  <div class="oc-page-subtitle" id="oc-subtitulo"></div>
+
+  <div id="oc-plantilla-aviso" hidden data-i18n="levantamiento.plantillaDesactualizada">Hay una versión más nueva de esta plantilla disponible. Este registro se sigue viendo con la plantilla que tenía al crearse.</div>
+
+  <div id="oc-readonly-banner" class="oc-banner" hidden>
+    <span class="oc-banner-text" data-i18n="levantamiento.completado">Este levantamiento ya se terminó y no se puede editar.</span>
+    <div class="oc-banner-actions">
+      <button type="button" id="oc-btn-ver-pdf" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.verPdf">Ver PDF</button>
+      <button type="button" id="oc-btn-descargar" class="oc-btn oc-btn-secondary" data-i18n="cotizacion.accion.descargar">Descargar</button>
+    </div>
+  </div>
+
+  <div id="oc-error-general" hidden></div>
+
+  <div id="oc-form-root"></div>
+
+  <div class="oc-form-actions">
+    <button type="button" id="oc-btn-guardar" class="oc-btn oc-btn-secondary" data-i18n="levantamiento.accion.guardar">Guardar</button>
+    <button type="button" id="oc-btn-terminar" class="oc-btn oc-btn-primary" data-i18n="levantamiento.accion.terminar">Terminar levantamiento</button>
+    <button type="button" id="oc-btn-cancelar" class="oc-btn oc-btn-secondary" data-i18n="levantamiento.accion.cancelar">Cancelar</button>
+    <span id="oc-save-feedback"></span>
+    <span id="oc-cambios-banner" data-i18n="levantamiento.cambiosSinGuardar">Cambios sin guardar</span>
+  </div>
+</main>
+
+<!-- Modal de confirmación genérico (ej. "Terminar levantamiento") -->
+<div class="oc-modal-overlay" id="oc-confirm-overlay" hidden>
+  <div class="oc-modal">
+    <h3 id="oc-confirm-titulo"></h3>
+    <p id="oc-confirm-texto"></p>
+    <div class="oc-modal-actions">
+      <button type="button" class="oc-btn oc-btn-secondary" id="oc-confirm-cancelar" data-i18n="cotizacion.accion.cancelar">Cancelar</button>
+      <button type="button" class="oc-btn oc-btn-primary" id="oc-confirm-aceptar"></button>
+    </div>
+  </div>
+</div>
+
+<script src="lib/jspdf.umd.min.js"></script>
+<script src="lib/jspdf.plugin.autotable.min.js"></script>
+<script src="store.js"></script>
+<script src="plantillas.js"></script>
+<script src="forms.js"></script>
+<script src="pdfStore.js"></script>
+<script src="pdf.js"></script>
+<script src="i18n.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function byId(id) { return document.getElementById(id); }
+
+  function getQueryParams() {
+    var params = {};
+    window.location.search.replace(/^\?/, '').split('&').forEach(function (pair) {
+      if (!pair) { return; }
+      var idx = pair.indexOf('=');
+      var key = decodeURIComponent(idx === -1 ? pair : pair.slice(0, idx));
+      var value = idx === -1 ? '' : decodeURIComponent(pair.slice(idx + 1));
+      params[key] = value;
+    });
+    return params;
+  }
+
+  // Id del levantamiento que se está editando (null = se está creando
+  // uno nuevo; Guardar/Terminar deciden entre crearLevantamiento /
+  // actualizarLevantamiento según esto, igual que OC_SOLICITUD.html).
+  var currentLevantamientoId = null;
+  var currentProyectoId = null;
+  var currentProyecto = null;
+  var plantillaCompleta = null;
+  var plantillaEspecificaId = null;
+  var eventoVisitaId = null;
+  var estadoActual = 'pendiente';
+
+  function marcarCambiosSinGuardar() {
+    byId('oc-cambios-banner').classList.add('oc-visible');
+  }
+
+  function limpiarCambiosSinGuardar() {
+    byId('oc-cambios-banner').classList.remove('oc-visible');
+  }
+
+  function mostrarGuardado(clave) {
+    var el = byId('oc-save-feedback');
+    el.textContent = OC_I18N.t(clave);
+    el.classList.add('oc-visible');
+    setTimeout(function () { el.classList.remove('oc-visible'); }, 2500);
+  }
+
+  function actualizarSubtitulo() {
+    var partes = [];
+    if (currentProyecto) { partes.push(currentProyecto.nombre); }
+    if (plantillaCompleta && plantillaCompleta.nombre) {
+      partes.push(plantillaCompleta.nombre[OC_I18N.getLang()] || plantillaCompleta.nombre.es);
+    }
+    byId('oc-subtitulo').textContent = partes.join(' · ');
+  }
+
+  function comprobarPlantillaDesactualizada() {
+    var aviso = byId('oc-plantilla-aviso');
+    if (!plantillaEspecificaId || !window.OCPlantillas || !plantillaCompleta) {
+      aviso.hidden = true;
+      return;
+    }
+    var viva = OCPlantillas.get(plantillaEspecificaId);
+    var versionGuardada = plantillaCompleta.version || 1;
+    aviso.hidden = !(viva.version > versionGuardada);
+  }
+
+  function deshabilitarFormulario(deshabilitado) {
+    var root = byId('oc-form-root');
+    Array.prototype.forEach.call(root.querySelectorAll('input, select, textarea, button'), function (el) {
+      el.disabled = deshabilitado;
+    });
+  }
+
+  function nombreArchivoLevantamiento(lev) {
+    return 'Levantamiento-' + lev.id + '.pdf';
+  }
+
+  function mostrarModoSegunEstado(lev) {
+    var completado = lev.estado === 'completada';
+    byId('oc-btn-guardar').hidden = completado;
+    byId('oc-btn-terminar').hidden = completado;
+    byId('oc-readonly-banner').hidden = !completado;
+    deshabilitarFormulario(completado);
+    if (completado) {
+      byId('oc-btn-ver-pdf').onclick = function () { OCPdfStore.abrirPdf(lev.pdfKey); };
+      byId('oc-btn-descargar').onclick = function () {
+        OCPdfStore.getPdf(lev.pdfKey).then(function (blob) {
+          if (blob) { OCPdfStore.descargar(blob, nombreArchivoLevantamiento(lev)); }
+        });
+      };
+    }
+  }
+
+  function cargarPlantillaYFormulario(datosIniciales) {
+    OCForms.render(byId('oc-form-root'), plantillaCompleta, datosIniciales || {}, {
+      lang: OC_I18N.getLang(),
+      onChange: marcarCambiosSinGuardar,
+      fotoKeyPrefix: 'FOTO-' + (currentProyectoId || 'TMP')
+    });
+  }
+
+  function cargarLevantamientoExistente(lev) {
+    currentLevantamientoId = lev.id;
+    currentProyectoId = lev.proyectoId;
+    currentProyecto = OCStore.getProyecto(lev.proyectoId);
+    plantillaCompleta = lev.plantillaSnapshot;
+    plantillaEspecificaId = lev.plantillaId;
+    eventoVisitaId = lev.eventoVisitaId;
+    estadoActual = lev.estado;
+    cargarPlantillaYFormulario(lev.datos);
+    actualizarSubtitulo();
+    comprobarPlantillaDesactualizada();
+    mostrarModoSegunEstado(lev);
+    limpiarCambiosSinGuardar();
+    byId('oc-error-general').hidden = true;
+  }
+
+  function iniciarModoCreacion(proyectoId) {
+    currentLevantamientoId = null;
+    currentProyectoId = proyectoId || null;
+    currentProyecto = proyectoId ? OCStore.getProyecto(proyectoId) : null;
+    var tipoProyecto = currentProyecto ? currentProyecto.tipo : '';
+    plantillaEspecificaId = window.OCPlantillas ? OCPlantillas.resolverId(tipoProyecto) : 'generico';
+    var especifica = window.OCPlantillas
+      ? OCPlantillas.get(plantillaEspecificaId)
+      : { id: 'generico', version: 1, nombre: { es: 'Levantamiento', en: 'Survey' }, secciones: [] };
+    plantillaCompleta = window.OCForms ? OCForms.conSeccionesBase(especifica) : especifica;
+    eventoVisitaId = null;
+    estadoActual = 'pendiente';
+
+    var datosIniciales = {
+      visita: { fecha: OCStore.todayISO() },
+      sitio: { direccion: currentProyecto ? currentProyecto.ubicacion : '' }
+    };
+    cargarPlantillaYFormulario(datosIniciales);
+    actualizarSubtitulo();
+    byId('oc-plantilla-aviso').hidden = true;
+    byId('oc-readonly-banner').hidden = true;
+    byId('oc-btn-guardar').hidden = false;
+    byId('oc-btn-terminar').hidden = false;
+    deshabilitarFormulario(false);
+    limpiarCambiosSinGuardar();
+
+    var sinProyecto = !currentProyectoId;
+    byId('oc-error-general').hidden = !sinProyecto;
+    byId('oc-error-general').textContent = sinProyecto ? OC_I18N.t('levantamiento.avisoSinProyecto') : '';
+    byId('oc-btn-guardar').disabled = sinProyecto;
+    byId('oc-btn-terminar').disabled = sinProyecto;
+  }
+
+  function initFromQuery() {
+    var params = getQueryParams();
+
+    if (params.id && window.OCStore) {
+      var existente = OCStore.getLevantamiento(params.id);
+      if (existente) {
+        cargarLevantamientoExistente(existente);
+        return;
+      }
+    }
+
+    if (params.proyecto && window.OCStore) {
+      var levProyecto = OCStore.getLevantamientoPorProyecto(params.proyecto);
+      if (levProyecto) {
+        cargarLevantamientoExistente(levProyecto);
+        return;
+      }
+      iniciarModoCreacion(params.proyecto);
+      return;
+    }
+
+    iniciarModoCreacion(null);
+  }
+
+  /* ============================================================
+     GUARDAR / TERMINAR — "Guardar" nunca valida (un borrador puede
+     quedar incompleto); "Terminar" exige OCForms.validate() limpio.
+     La sección Visita maneja su propio Evento de calendario (tipo
+     'levantamiento', ya operativa en TIPOS_EVENTO): se crea la primera
+     vez que hay fecha, y se actualiza (nunca duplica) después.
+     ============================================================ */
+  function sincronizarEventoVisita(datos, estadoEvento) {
+    if (!currentProyectoId) { return; }
+    var visita = datos.visita || {};
+    if (!visita.fecha) { return; }
+    var cambios = {
+      fecha: visita.fecha,
+      horaInicio: visita.horaInicio || null,
+      horaFin: visita.horaFin || null,
+      cuadrilla: visita.personal || null
+    };
+    if (estadoEvento) { cambios.estado = estadoEvento; }
+    if (eventoVisitaId) {
+      OCStore.actualizarEvento(eventoVisitaId, cambios);
+    } else {
+      cambios.proyectoId = currentProyectoId;
+      cambios.etapa = 'levantamiento-tecnico';
+      cambios.tipo = 'levantamiento';
+      var nuevo = OCStore.crearEvento(cambios);
+      eventoVisitaId = nuevo.id;
+    }
+  }
+
+  function guardar(estadoFinal) {
+    if (!currentProyectoId) {
+      byId('oc-error-general').hidden = false;
+      byId('oc-error-general').textContent = OC_I18N.t('levantamiento.avisoSinProyecto');
+      return null;
+    }
+    var datos = OCForms.collect(byId('oc-form-root'));
+    sincronizarEventoVisita(datos, estadoFinal === 'completada' ? 'terminada' : undefined);
+
+    var lev;
+    if (currentLevantamientoId) {
+      lev = OCStore.actualizarLevantamiento(currentLevantamientoId, {
+        datos: datos,
+        estado: estadoFinal || estadoActual,
+        eventoVisitaId: eventoVisitaId
+      });
+    } else {
+      lev = OCStore.crearLevantamiento({
+        proyectoId: currentProyectoId,
+        plantillaId: plantillaEspecificaId,
+        plantillaVersion: plantillaCompleta.version,
+        plantillaSnapshot: plantillaCompleta,
+        estado: estadoFinal || 'en_curso',
+        eventoVisitaId: eventoVisitaId,
+        datos: datos
+      });
+      currentLevantamientoId = lev.id;
+    }
+    estadoActual = lev.estado;
+    byId('oc-error-general').hidden = true;
+    limpiarCambiosSinGuardar();
+    return lev;
+  }
+
+  function confirmarTerminar() {
+    cerrarModalConfirmacion();
+    var lev = guardar('completada');
+    if (!lev) { return; }
+    var proyecto = OCStore.getProyecto(lev.proyectoId);
+    var config = OCStore.getConfig();
+    OCPdf.generarPdfLevantamiento(lev, proyecto, config).then(function (blob) {
+      var pdfKey = lev.pdfKey || ('PDF-' + lev.id);
+      return OCPdfStore.guardarPdf(pdfKey, blob).then(function () {
+        return OCStore.actualizarLevantamiento(lev.id, { pdfKey: pdfKey });
+      });
+    }).then(function (levConPdf) {
+      mostrarModoSegunEstado(levConPdf);
+      mostrarGuardado('levantamiento.terminado');
+    }).catch(function (e) {
+      console.error('[ObraCore] Error generando el PDF del levantamiento:', e);
+      byId('oc-error-general').hidden = false;
+      byId('oc-error-general').textContent = String((e && e.message) || e);
+    });
+  }
+
+  /* ============================================================
+     MODAL DE CONFIRMACIÓN GENÉRICO (nunca confirm() nativo)
+     ============================================================ */
+  var confirmHandler = null;
+  function abrirModalConfirmacion(titulo, texto, textoAceptar, onAceptar) {
+    byId('oc-confirm-titulo').textContent = titulo;
+    byId('oc-confirm-texto').textContent = texto;
+    byId('oc-confirm-aceptar').textContent = textoAceptar;
+    confirmHandler = onAceptar;
+    byId('oc-confirm-overlay').hidden = false;
+  }
+  function cerrarModalConfirmacion() {
+    byId('oc-confirm-overlay').hidden = true;
+    confirmHandler = null;
+  }
+
+  byId('oc-confirm-aceptar').addEventListener('click', function () {
+    if (confirmHandler) { confirmHandler(); }
+  });
+  byId('oc-confirm-cancelar').addEventListener('click', cerrarModalConfirmacion);
+  byId('oc-confirm-overlay').addEventListener('click', function (e) {
+    if (e.target === byId('oc-confirm-overlay')) { cerrarModalConfirmacion(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !byId('oc-confirm-overlay').hidden) { cerrarModalConfirmacion(); }
+  });
+
+  byId('oc-btn-guardar').addEventListener('click', function () {
+    var lev = guardar(null);
+    if (lev) { mostrarGuardado('levantamiento.guardado'); }
+  });
+
+  byId('oc-btn-terminar').addEventListener('click', function () {
+    if (!currentProyectoId) {
+      byId('oc-error-general').hidden = false;
+      byId('oc-error-general').textContent = OC_I18N.t('levantamiento.avisoSinProyecto');
+      return;
+    }
+    var errores = OCForms.validate(byId('oc-form-root'));
+    if (errores.length) {
+      byId('oc-error-general').hidden = false;
+      byId('oc-error-general').textContent = OC_I18N.t('levantamiento.avisoCamposRequeridos');
+      return;
+    }
+    abrirModalConfirmacion(
+      OC_I18N.t('levantamiento.confirmTerminar.titulo'),
+      OC_I18N.t('levantamiento.confirmTerminar.texto'),
+      OC_I18N.t('levantamiento.confirmTerminar.aceptar'),
+      confirmarTerminar
+    );
+  });
+
+  byId('oc-btn-cancelar').addEventListener('click', function () {
+    window.location.href = 'OC_MAIN.html';
+  });
+
+  // El árbol/calendario de OC_MAIN.html difiere el primer render real
+  // hasta que el diccionario está listo (evento 'oc:langchange'); esta
+  // pantalla hace lo mismo, porque OCForms.render usa OC_I18N.t() para
+  // varias etiquetas (agregar fila, usar mi ubicación, etc.) y no solo
+  // los textos bilingües de la propia plantilla.
+  document.addEventListener('oc:langchange', function () {
+    if (!plantillaCompleta) {
+      initFromQuery();
+      return;
+    }
+    var datosActuales = OCForms.collect(byId('oc-form-root'));
+    cargarPlantillaYFormulario(datosActuales);
+    actualizarSubtitulo();
+    if (estadoActual === 'completada') { deshabilitarFormulario(true); }
+  });
+
+  OC_I18N.init();
+})();
+</script>
+
+</body>
+</html>

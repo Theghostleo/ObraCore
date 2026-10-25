@@ -1,0 +1,1716 @@
+/* ============================================================
+   TOKENS DE COLOR
+   Todo color vive aquí. Un tema claro futuro solo redefine esto.
+   ============================================================ */
+:root {
+  /* Base — dirección "Plano de ingeniería" */
+  --oc-bg: #0c1016;
+  --oc-surface: #141b24;
+  --oc-border: #24313f;
+  --oc-accent-cyan: #4dd8ff;   /* interacción: hover, foco, activo */
+  --oc-accent-gold: #f2b84b;   /* en curso, hoy, selección */
+  --oc-text-muted: #7d8a99;
+  --oc-text: #e8edf3;
+
+  /* Derivados de los tokens base, para no repetir rgba a mano */
+  --oc-accent-cyan-glow: rgba(77, 216, 255, 0.16);
+  --oc-accent-cyan-glow-strong: rgba(77, 216, 255, 0.32);
+  --oc-accent-gold-glow: rgba(242, 184, 75, 0.22);
+  --oc-accent-cyan-border: rgba(77, 216, 255, 0.32);
+  --oc-accent-gold-border: rgba(242, 184, 75, 0.45);
+
+  /* Alerta / error de formulario. Un único nombre para todo (antes
+     --oc-error en las pantallas autocontenidas y --oc-alert aquí).
+     Reservado solo para problemas reales: una actividad confirmada con
+     fecha vencida, una etapa bloqueada — nunca para "ocupado" o
+     cualquier estado normal de alta actividad. */
+  --oc-alert: #ff6b5b;
+  --oc-alert-glow: rgba(255, 107, 91, 0.16);
+  --oc-alert-border: rgba(255, 107, 91, 0.42);
+
+  /* Completado / resultado positivo: proyecto terminado, actividad
+     terminada. Verde en armonía con el resto de la paleta (misma
+     saturación/brillo que cian y alerta sobre el fondo oscuro). */
+  --oc-ok: #3ddc84;
+  --oc-ok-glow: rgba(61, 220, 132, 0.18);
+  --oc-ok-border: rgba(61, 220, 132, 0.42);
+
+  /* Rejilla de plano: solo para el fondo del área principal */
+  --oc-grid-line: rgba(77, 216, 255, 0.035);
+
+  --oc-radius: 3px;            /* botones, inputs, filas */
+  --oc-radius-panel: 4px;      /* paneles, tarjetas, modales */
+  --oc-navbar-h: 61px;
+  --oc-sidebar-w: 280px;
+
+  --oc-font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --oc-font-mono: 'IBM Plex Mono', Consolas, monospace;
+
+  /* Movimiento (obracore-motion) */
+  --oc-dur-fast: 150ms;
+  --oc-dur-med: 240ms;
+  --oc-dur-slow: 300ms;
+  --oc-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* el scroll de página completa está prohibido; solo scrollean sub-paneles */
+  background: var(--oc-bg);
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar estilizada (WebKit / Blink) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--oc-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--oc-text-muted);
+}
+/* Scrollbar estilizada (Firefox) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--oc-border) transparent;
+}
+
+/* ============================================================
+   LAYOUT RAÍZ: 3 zonas fijas, sin scroll de body
+   ============================================================ */
+#oc-app {
+  display: grid;
+  grid-template-columns: var(--oc-sidebar-w) 1fr;
+  grid-template-rows: var(--oc-navbar-h) 1fr;
+  grid-template-areas:
+    "navbar navbar"
+    "sidebar main";
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ============================================================
+   1. NAVBAR SUPERIOR
+   ============================================================ */
+#oc-navbar {
+  grid-area: navbar;
+  display: flex;
+  align-items: center;
+  background: var(--oc-surface);
+  border-bottom: 1px solid var(--oc-border);
+  padding: 0 24px;
+  gap: 38px;
+}
+
+#oc-logo {
+  font-family: var(--oc-font-mono);
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--oc-text);
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+#oc-logo span {
+  color: var(--oc-accent-gold); /* toque Iron Man: el logo lleva el acento dorado */
+}
+
+/*
+  Calendario y Flujo de trabajo ya navegan por hash (ver router en
+  OC_MAIN.html). Los otros dos siguen siendo placeholders deshabilitados.
+*/
+#oc-nav-sections {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+#oc-nav-sections li {
+  display: flex;
+  align-items: center;
+}
+#oc-nav-sections button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 7px 17px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+#oc-nav-sections button:hover {
+  color: var(--oc-text);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--oc-border);
+}
+#oc-nav-sections button.oc-active {
+  color: var(--oc-accent-cyan);
+  background: var(--oc-accent-cyan-glow);
+  border-color: var(--oc-accent-cyan-border);
+}
+#oc-nav-sections button[disabled] {
+  color: var(--oc-text-muted);
+  opacity: 0.45;
+  cursor: default;
+}
+#oc-nav-sections button[disabled]:hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* Selector de idioma (solo visual por ahora), pegado a la izquierda del acceso de registro */
+#oc-lang-switch {
+  display: flex;
+  margin-left: auto;
+  border: 1px solid var(--oc-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.oc-lang-btn {
+  background: transparent;
+  border: none;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.oc-lang-btn + .oc-lang-btn {
+  border-left: 1px solid var(--oc-border);
+}
+.oc-lang-btn:hover {
+  color: var(--oc-text);
+  background: rgba(255, 255, 255, 0.03);
+}
+.oc-lang-btn.oc-active {
+  color: var(--oc-accent-cyan);
+  background: var(--oc-accent-cyan-glow);
+}
+
+/* Acceso a registro/cuenta de usuario, alineado a la derecha del navbar */
+#oc-user-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+#oc-user-link svg {
+  width: 21px;
+  height: 21px;
+  fill: currentColor;
+}
+#oc-user-link:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan);
+  box-shadow: 0 0 8px var(--oc-accent-cyan-glow);
+}
+
+/* ============================================================
+   2. SIDEBAR — árbol tipo explorador de archivos
+   ============================================================ */
+#oc-sidebar {
+  grid-area: sidebar;
+  background: var(--oc-surface);
+  border-right: 1px solid var(--oc-border);
+  overflow-y: auto;
+  padding: 12px 8px;
+}
+
+#oc-sidebar-title {
+  font-family: var(--oc-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--oc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 8px 10px 8px;
+}
+
+.oc-tree, .oc-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.oc-tree ul {
+  /* indentación por nivel de anidamiento */
+  padding-left: 18px;
+}
+
+.oc-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: var(--oc-radius);
+  cursor: pointer;
+  color: var(--oc-text);
+  font-size: 13px;
+  white-space: nowrap;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.oc-tree-row:hover {
+  background: var(--oc-accent-gold-glow);
+  border-color: var(--oc-accent-gold-border);
+  color: var(--oc-accent-gold);
+}
+.oc-tree-row.oc-selected {
+  background: var(--oc-accent-gold-glow);
+  border-color: var(--oc-accent-gold-border);
+  color: var(--oc-accent-gold);
+}
+
+/* Flecha/triángulo que rota al expandir. Invisible (pero reserva espacio) en las hojas. */
+.oc-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--oc-text-muted);
+  transition: transform 0.15s ease;
+}
+.oc-caret svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+}
+.oc-tree-node.oc-expanded > .oc-tree-row > .oc-caret {
+  transform: rotate(90deg);
+}
+.oc-caret.oc-caret-empty {
+  visibility: hidden;
+}
+
+.oc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--oc-text-muted);
+}
+.oc-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor; /* sin esto, los paths sin fill propio caen al negro por default del SVG */
+}
+.oc-tree-row:hover .oc-icon,
+.oc-tree-row.oc-selected .oc-icon {
+  color: var(--oc-accent-gold);
+}
+
+.oc-label {
+  flex: 1 1 auto;
+  min-width: 0; /* imprescindible en flex para que overflow/ellipsis corten en vez de desbordar */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hijos colapsados por defecto: se ocultan vía JS con esta clase */
+.oc-children-hidden {
+  display: none;
+}
+
+/* ---- Toolbar del explorador: "+ Nuevo proyecto" y filtro ---- */
+#oc-sidebar-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 4px 12px 4px;
+}
+#oc-sidebar-toolbar .oc-btn {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+#oc-sidebar-toolbar .oc-input {
+  padding: 7px 10px;
+  font-size: 12.5px;
+}
+
+.oc-tree-empty {
+  padding: 10px 8px;
+  font-size: 12.5px;
+  color: var(--oc-text-muted);
+  font-style: italic;
+}
+
+/* ---- Pastilla de estado de proyecto (prospecto/cotizado/ganado/
+   en_ejecucion/terminado/pausado/perdido/cancelado) ---- */
+.oc-proyecto-estado {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--oc-font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.oc-proyecto-estado--prospecto,
+.oc-proyecto-estado--cotizado {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--oc-text-muted);
+  border: 1px solid var(--oc-border);
+}
+.oc-proyecto-estado--ganado,
+.oc-proyecto-estado--en_ejecucion {
+  background: var(--oc-accent-gold-glow);
+  color: var(--oc-accent-gold);
+  border: 1px solid var(--oc-accent-gold-border);
+}
+.oc-proyecto-estado--terminado {
+  background: var(--oc-ok-glow);
+  color: var(--oc-ok);
+  border: 1px solid var(--oc-ok-border);
+}
+.oc-proyecto-estado--pausado {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--oc-text-muted);
+  border: 1px dashed var(--oc-border);
+}
+.oc-proyecto-estado--perdido,
+.oc-proyecto-estado--cancelado {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--oc-text-muted);
+  border: 1px solid var(--oc-border);
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+/* ---- Sugerencia discreta de "marcar como perdido" (todas las
+   cotizaciones del proyecto quedaron rechazadas) — nunca rojo, es solo
+   una sugerencia, no un error. ---- */
+.oc-proyecto-aviso-perdido {
+  flex-shrink: 0;
+  margin-left: 2px;
+  color: var(--oc-text-muted);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+.oc-proyecto-aviso-perdido:hover {
+  color: var(--oc-accent-gold);
+}
+
+/* ---- Botón "⋯" del menú manual de proyecto (Pausar/Perdido/Cancelar/
+   Reactivar), junto a la pastilla de estado ---- */
+.oc-tree-menu-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 4px;
+  border-radius: var(--oc-radius);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--oc-text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.oc-tree-menu-btn:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan-border);
+  background: var(--oc-accent-cyan-glow);
+}
+
+/* ---- Nodo de proyecto: nombre arriba, "Cliente · PRJ-XXXX" abajo ---- */
+.oc-tree-proyecto-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.3;
+}
+.oc-tree-proyecto-sub {
+  font-family: var(--oc-font-mono);
+  font-size: 10.5px;
+  color: var(--oc-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oc-tree-row:hover .oc-tree-proyecto-sub,
+.oc-tree-row.oc-selected .oc-tree-proyecto-sub {
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* ---- Carpeta de mes (agrupa proyectos por fecha de alta) ---- */
+.oc-mes-contador {
+  flex-shrink: 0;
+  font-family: var(--oc-font-mono);
+  font-size: 10.5px;
+  color: var(--oc-text-muted);
+}
+.oc-tree-row:hover .oc-mes-contador,
+.oc-tree-row.oc-selected .oc-mes-contador {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* ---- Fila de etapa dentro de un proyecto: ícono de estado + label ---- */
+.oc-etapa-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+/* Misma especificidad que ".oc-tree-row:hover .oc-icon"/".oc-selected .oc-icon"
+   (3 selectores de clase) para que el rojo de "bloqueada" nunca se
+   pierda contra el dorado de hover/selección; gana por venir después. */
+.oc-tree-row .oc-icon.oc-etapa-icon--bloqueada {
+  color: var(--oc-alert);
+}
+.oc-tree-etapa--disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.oc-tree-etapa--disabled:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--oc-text);
+}
+.oc-etapa-pronto {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+/* ---- Fila de registro (solicitud/cotización) dentro de una etapa ---- */
+.oc-tree-registro .oc-label {
+  font-family: var(--oc-font-mono);
+  font-size: 12px;
+}
+
+/* ============================================================
+   3. PANEL CENTRAL — calendario
+   ============================================================ */
+#oc-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--oc-bg);
+  background-image:
+    linear-gradient(var(--oc-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--oc-grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+#oc-calendar-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 20px;
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius-panel);
+  overflow: hidden;
+}
+/* [hidden] y la regla de arriba tienen la misma especificidad; sin
+   esto el display:flex del autor gana y el panel se ve aunque esté
+   "hidden" (mismo bug ya encontrado en .oc-banner de OC_COTIZACION). */
+#oc-calendar-panel[hidden],
+#oc-flujo-panel[hidden] {
+  display: none;
+}
+
+#oc-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--oc-border);
+}
+
+#oc-cal-title {
+  font-family: var(--oc-font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: capitalize;
+}
+
+#oc-cal-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.oc-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-nav-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+.oc-nav-btn:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan);
+  box-shadow: 0 0 8px var(--oc-accent-cyan-glow);
+}
+
+#oc-cal-weekdays {
+  display: grid;
+  /* minmax(0, 1fr) y no 1fr: con 1fr el mínimo es el contenido, y los
+     chips de evento largos ensanchaban su columna y desalineaban la
+     cuadrícula respecto a este encabezado. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid var(--oc-border);
+}
+#oc-cal-weekdays span {
+  padding: 10px 0;
+  text-align: center;
+  font-family: var(--oc-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--oc-text-muted);
+  letter-spacing: 1px;
+}
+
+#oc-cal-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)); /* ver #oc-cal-weekdays */
+  grid-auto-rows: 1fr;
+  overflow-y: auto;
+}
+
+.oc-day-cell {
+  position: relative;
+  border-right: 1px solid var(--oc-border);
+  border-bottom: 1px solid var(--oc-border);
+  padding: 8px 10px;
+  cursor: default;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.oc-day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.oc-day-number {
+  font-family: var(--oc-font-mono);
+  font-size: 13px;
+  color: var(--oc-text);
+}
+
+/* Días fuera del mes actual: atenuados */
+.oc-day-cell.oc-outside {
+  background: rgba(255, 255, 255, 0.015);
+}
+.oc-day-cell.oc-outside .oc-day-number {
+  color: var(--oc-text-muted);
+  opacity: 0.4;
+}
+
+/* Hover suave con glow dorado, solo en días del mes actual */
+.oc-day-cell.oc-current-month:hover {
+  background: var(--oc-accent-gold-glow);
+  box-shadow: inset 0 0 0 1px var(--oc-accent-gold), 0 0 14px var(--oc-accent-gold-glow);
+}
+
+/* Día de hoy: acento dorado */
+.oc-day-cell.oc-today {
+  box-shadow: inset 0 0 0 1px var(--oc-accent-gold);
+}
+.oc-day-cell.oc-today .oc-day-number {
+  color: var(--oc-accent-gold);
+  font-weight: 700;
+}
+.oc-day-cell.oc-today.oc-current-month:hover {
+  box-shadow: inset 0 0 0 1px var(--oc-accent-gold), 0 0 14px var(--oc-accent-gold-glow);
+}
+
+/* ============================================================
+   MENÚ RADIAL ("array polar") — 7 etapas, se abre al hacer
+   hover sobre una celda de día. Contenedor y pastillas viven en
+   position:fixed (coordenadas de viewport) para escapar del
+   overflow:hidden/auto del panel y la cuadrícula del calendario.
+   ============================================================ */
+.oc-fan-menu {
+  position: fixed;
+  z-index: 500;
+}
+
+.oc-fan-line {
+  position: fixed;
+  height: 1.5px;
+  background: var(--oc-accent-cyan);
+  transform-origin: left center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 500;
+  transition: opacity 0.2s ease;
+}
+.oc-fan-line.oc-fan-in {
+  opacity: 0.4;
+}
+
+.oc-fan-pill {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: 999px;
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 501;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translate(var(--fan-dx, 0), var(--fan-dy, 0)) scale(0.75);
+  transition: opacity 0.2s ease, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+.oc-fan-pill.oc-fan-in {
+  opacity: 1;
+  transform: translate(0, 0) scale(1);
+}
+.oc-fan-pill:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan);
+  box-shadow: 0 0 10px var(--oc-accent-cyan-glow), 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.oc-fan-pill--disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.oc-fan-pill--disabled:hover {
+  color: var(--oc-text);
+  border-color: var(--oc-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* ============================================================
+   ETIQUETA DE ESTADO DEL DÍA — reservado / ocupado, según
+   OCStore.getEstadoDia() (actividades operativas tentativas vs.
+   confirmadas/en ejecución). "Libre" no se pinta: un día vacío ya
+   significa libre, no hace falta decirlo (ver renderCalendar).
+   Ambas variantes son ámbar — "ocupado" ya no es rojo: el rojo queda
+   reservado para problemas reales (ver .oc-evt-chip--vencida).
+   ============================================================ */
+.oc-day-status {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--oc-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color var(--oc-dur-med) ease, color var(--oc-dur-med) ease, border-color var(--oc-dur-med) ease;
+}
+
+.oc-day-status--reservado {
+  background: var(--oc-accent-gold-glow);
+  color: var(--oc-accent-gold);
+  border: 1px dashed var(--oc-accent-gold-border);
+}
+.oc-day-status--ocupado {
+  background: var(--oc-accent-gold-glow);
+  color: var(--oc-accent-gold);
+  border: 1px solid var(--oc-accent-gold-border);
+}
+
+/* ---- Chips de evento (agenda) — hasta DAY_CHIPS_VISIBLE por día,
+   más un chip "+N más" que abre la lista completa del día. ---- */
+.oc-day-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+  min-width: 0;
+}
+/* El color del chip viene del ESTADO de la actividad (o "hito" para
+   cualquier tipo de hito), nunca del tipo — el tipo se distingue solo
+   por el texto/ícono. Mismo lenguaje que las pastillas de proyecto:
+   tentativa=borde punteado neutro, confirmada/en_ejecucion=ámbar,
+   terminada=verde atenuado, hito=muted sin fondo. */
+.oc-evt-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 2px 6px;
+  border-radius: var(--oc-radius);
+  font-family: var(--oc-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background-color var(--oc-dur-fast) ease, border-color var(--oc-dur-fast) ease, box-shadow var(--oc-dur-fast) ease;
+}
+.oc-evt-chip--hito {
+  background: transparent;
+  color: var(--oc-text-muted);
+  border: 1px solid transparent;
+}
+.oc-evt-chip--tentativa {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--oc-text-muted);
+  border: 1px dashed var(--oc-border);
+}
+.oc-evt-chip--confirmada {
+  background: var(--oc-accent-gold-glow);
+  color: var(--oc-accent-gold);
+  border: 1px solid var(--oc-accent-gold-border);
+}
+.oc-evt-chip--en_ejecucion {
+  background: var(--oc-accent-gold-glow);
+  color: var(--oc-accent-gold);
+  border: 1px solid var(--oc-accent-gold-border);
+  padding-left: 16px;
+  position: relative;
+}
+/* Punto indicador "en vivo" — único loop de animación del sistema,
+   cubierto por el bloque prefers-reduced-motion al final del archivo. */
+.oc-evt-chip--en_ejecucion::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: var(--oc-accent-gold);
+  animation: oc-pulse 1.6s ease-in-out infinite;
+}
+.oc-evt-chip--terminada {
+  background: var(--oc-ok-glow);
+  color: var(--oc-ok);
+  border: 1px solid var(--oc-ok-border);
+  opacity: 0.75;
+}
+/* Única vía al rojo para un chip: OCStore.eventoVencido() true. Se
+   agrega ENCIMA de --confirmada/--en_ejecucion, nunca reemplaza la
+   clase de estado. */
+.oc-evt-chip--vencida {
+  background: var(--oc-alert-glow);
+  color: var(--oc-alert);
+  border-color: var(--oc-alert-border);
+}
+.oc-evt-chip--vencida::before {
+  background: var(--oc-alert);
+}
+.oc-evt-chip--mas {
+  background: transparent;
+  color: var(--oc-text-muted);
+  border: 1px dashed var(--oc-border);
+}
+.oc-evt-chip:hover {
+  box-shadow: 0 0 8px var(--oc-accent-cyan-glow);
+}
+
+/* ============================================================
+   DESPLEGABLE DE "COTIZACIÓN" — anclado a la pastilla del abanico,
+   con hasta 3 opciones (Cotizar / Ir a cotización / Ver lista). El
+   mismo componente (con clase adicional .oc-day-empty-menu) se
+   reutiliza para el menú de "día vacío" del calendario.
+   ============================================================ */
+.oc-cotizacion-dropdown {
+  position: fixed;
+  z-index: 600;
+  min-width: 240px;
+  max-width: 300px;
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius-panel);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  padding: 6px;
+}
+.oc-dropdown-item {
+  padding: 2px;
+}
+.oc-dropdown-item-disabled {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--oc-text-muted);
+}
+.oc-dropdown-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.oc-dropdown-btn:hover {
+  background: var(--oc-accent-cyan-glow);
+  color: var(--oc-accent-cyan);
+}
+.oc-dropdown-link {
+  color: var(--oc-accent-cyan);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  width: fit-content;
+}
+.oc-dropdown-link:hover {
+  text-decoration: underline;
+}
+.oc-dropdown-submenu {
+  border-top: 1px solid var(--oc-border);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+.oc-dropdown-submenu-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--oc-text-muted);
+  padding: 4px 10px;
+}
+.oc-dropdown-subitem {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 10px 7px 20px;
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.oc-dropdown-subitem:hover {
+  background: var(--oc-accent-gold-glow);
+  color: var(--oc-accent-gold);
+}
+
+/* ============================================================
+   MODAL genérico (confirmaciones, lista de cotizaciones) — usado
+   desde OC_MAIN.html; OC_COTIZACION.html trae su propia copia
+   inline por ser autocontenido.
+   ============================================================ */
+.oc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 7, 10, 0.6);
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.oc-modal {
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius-panel);
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.oc-modal h3 {
+  margin: 0 0 14px;
+  font-family: var(--oc-font-mono);
+  font-size: 16px;
+  color: var(--oc-text);
+}
+.oc-modal p {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--oc-text-muted);
+  line-height: 1.5;
+}
+.oc-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+.oc-btn {
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--oc-radius);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+}
+.oc-btn-secondary:hover {
+  color: var(--oc-text);
+  border-color: var(--oc-text-muted);
+}
+
+.oc-btn-primary {
+  background: var(--oc-accent-gold-glow);
+  border: 1px solid var(--oc-accent-gold);
+  color: var(--oc-accent-gold);
+}
+.oc-btn-primary:hover {
+  box-shadow: 0 0 10px var(--oc-accent-gold-glow);
+}
+
+/* ---- Campos de formulario — usados en los modales de proyecto/evento
+   nuevo; mismo lenguaje visual que OC_SOLICITUD.html/OC_COTIZACION.html. ---- */
+.oc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.oc-field:last-of-type {
+  margin-bottom: 0;
+}
+.oc-field label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oc-text-muted);
+}
+.oc-input, select.oc-input, textarea.oc-input {
+  width: 100%;
+  background: var(--oc-bg);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  font-size: 14px;
+  padding: 9px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-input::placeholder {
+  color: var(--oc-text-muted);
+  opacity: 0.7;
+}
+.oc-input:focus {
+  outline: none;
+  border-color: var(--oc-accent-cyan);
+  box-shadow: 0 0 0 3px var(--oc-accent-cyan-glow);
+}
+.oc-input.oc-input-error {
+  border-color: var(--oc-alert);
+  box-shadow: 0 0 0 3px var(--oc-alert-glow);
+}
+
+.oc-icon-btn {
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  border-radius: var(--oc-radius);
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.oc-icon-btn:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan);
+}
+.oc-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---- Lista de cotizaciones del día ---- */
+.oc-modal-lista {
+  max-width: 720px;
+}
+.oc-lista-cotizaciones {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.oc-lista-row {
+  display: grid;
+  grid-template-columns: 1.3fr 0.6fr 0.9fr 1.4fr 1fr 0.9fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 4px;
+  font-size: 12.5px;
+  color: var(--oc-text);
+  border-bottom: 1px solid var(--oc-border);
+}
+.oc-lista-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--oc-text-muted);
+}
+.oc-lista-row-atenuada {
+  opacity: 0.5;
+}
+.oc-lista-acciones {
+  display: flex;
+  gap: 4px;
+  justify-self: end;
+}
+
+/* ---- Pastilla de estado de cotización (lista de cotizaciones, árbol):
+   aceptada = ámbar; rechazada/sustituida = neutro atenuado (nunca rojo,
+   no es un error); borrador/emitida = neutro normal. ---- */
+.oc-cot-estado {
+  flex-shrink: 0;
+  display: inline-flex;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--oc-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--oc-text-muted);
+  border: 1px solid var(--oc-border);
+}
+.oc-cot-estado--aceptada {
+  background: var(--oc-accent-gold-glow);
+  color: var(--oc-accent-gold);
+  border-color: var(--oc-accent-gold-border);
+}
+.oc-cot-estado--rechazada,
+.oc-cot-estado--sustituida {
+  opacity: 0.7;
+}
+
+/* ---- Lista de eventos del día (modal de agenda) ---- */
+.oc-lista-eventos {
+  max-height: 50vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.oc-lista-evento-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.oc-lista-evento-row:hover {
+  background: var(--oc-accent-cyan-glow);
+  border-color: var(--oc-accent-cyan-border);
+}
+.oc-lista-evento-row .oc-evt-chip {
+  width: auto;
+  flex-shrink: 0;
+  cursor: default;
+}
+.oc-lista-evento-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--oc-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oc-lista-evento-acciones {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.oc-evt-accion-btn {
+  padding: 3px 8px;
+  border-radius: var(--oc-radius);
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.oc-evt-accion-btn:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan);
+  background: var(--oc-accent-cyan-glow);
+}
+.oc-evt-accion-btn--cancelar:hover {
+  color: var(--oc-alert);
+  border-color: var(--oc-alert);
+  background: var(--oc-alert-glow);
+}
+
+/* ============================================================
+   FLUJO DE TRABAJO — vista de nodos y cables estilo Node-RED
+   (ver flujo.js). Los nodos se posicionan con la propiedad `translate`
+   (no `transform`): así `transform` queda libre para hover/arrastre
+   sin pisar la posición. Colores: ver obracore-design-tokens, misma
+   tabla que proyecto/evento — ningún token nuevo.
+   ============================================================ */
+#oc-flujo-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 20px;
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius-panel);
+  overflow: hidden;
+}
+
+/* Transición de entrada compartida por #oc-calendar-panel y
+   #oc-flujo-panel al cambiar de vista (router en OC_MAIN.html). */
+@keyframes oc-vista-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.oc-vista-entrando {
+  animation: oc-vista-in var(--oc-dur-med) var(--oc-ease-out) both;
+}
+
+/* ---- Vista general: tabla de filas compactas ---- */
+.oc-flujo-overview {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+.oc-flujo-overview-head,
+.oc-flujo-overview-row {
+  display: grid;
+  grid-template-columns: 220px repeat(7, 1fr);
+  align-items: center;
+}
+.oc-flujo-overview-head {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--oc-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+.oc-flujo-overview-col-proyecto {
+  font-family: var(--oc-font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--oc-text-muted);
+}
+.oc-flujo-overview-col-etapa--head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.oc-flujo-overview-col-nombre {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--oc-text-muted);
+  text-align: center;
+}
+.oc-flujo-overview-col-contador {
+  font-family: var(--oc-font-mono);
+  font-size: 10px;
+  color: var(--oc-accent-gold);
+}
+.oc-flujo-overview-body {
+  flex: 1;
+  overflow-y: auto;
+}
+.oc-flujo-fila-entrando {
+  opacity: 0;
+  animation: oc-vista-in var(--oc-dur-med) var(--oc-ease-out) both;
+}
+.oc-flujo-overview-row {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--oc-border);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.oc-flujo-overview-row:hover,
+.oc-flujo-overview-row:focus-visible {
+  background: rgba(77, 216, 255, 0.05);
+}
+.oc-flujo-overview-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--oc-text);
+}
+.oc-flujo-overview-meta {
+  font-family: var(--oc-font-mono);
+  font-size: 11px;
+  color: var(--oc-text-muted);
+  margin: 2px 0 4px;
+}
+.oc-flujo-overview-col-etapa {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.oc-flujo-overview-col-etapa:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 16px;
+  height: 2px;
+  background: var(--etapa-color, var(--oc-border));
+  transform: translateY(-50%);
+}
+.oc-flujo-nodo-compacto {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--nodo-color, var(--oc-text-muted));
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 6px var(--nodo-color, transparent);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.oc-flujo-nodo-compacto:hover {
+  transform: scale(1.3);
+  box-shadow: 0 0 10px var(--oc-accent-cyan-glow-strong);
+}
+.oc-flujo-nodo-compacto--proximamente {
+  opacity: 0.4;
+  cursor: default;
+}
+.oc-flujo-nodo-compacto--proximamente:hover {
+  transform: none;
+  box-shadow: none;
+}
+.oc-flujo-nodo-compacto-badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: 999px;
+  font-family: var(--oc-font-mono);
+  font-size: 8px;
+  padding: 0 3px;
+  color: var(--oc-text-muted);
+}
+.oc-flujo-vacio {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--oc-text-muted);
+}
+
+/* ---- Detalle: lienzo ---- */
+.oc-flujo-detail {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.oc-flujo-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--oc-border);
+}
+.oc-flujo-toolbar-titulo {
+  font-family: var(--oc-font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+}
+.oc-flujo-toolbar-controles {
+  display: flex;
+  gap: 4px;
+}
+
+.oc-flujo-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.oc-flujo-zoom-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius);
+  color: var(--oc-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.oc-flujo-zoom-btn:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan);
+  background: var(--oc-accent-cyan-glow);
+}
+
+.oc-flujo-canvas-wrap {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  cursor: grab;
+  background-image:
+    linear-gradient(var(--oc-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--oc-grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.oc-flujo-canvas-wrap:active {
+  cursor: grabbing;
+}
+.oc-flujo-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+.oc-flujo-world--animando {
+  transition: transform var(--oc-dur-slow) var(--oc-ease-out);
+}
+
+.oc-flujo-cables {
+  position: absolute;
+  top: -2000px;
+  left: -2000px;
+  width: 6000px;
+  height: 6000px;
+  overflow: visible;
+  pointer-events: none;
+}
+.oc-flujo-cable {
+  fill: none;
+  stroke-width: 2;
+  transform: translate(2000px, 2000px);
+}
+.oc-flujo-cable--rama {
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+.oc-flujo-cable--recotizar {
+  stroke-width: 1.75;
+  stroke-dasharray: 5 4;
+}
+/* Segundo (y último) loop de animación permitido en todo el sistema,
+   junto con oc-pulse: el cable que entra a la etapa en_curso "avanza"
+   para señalar que el trabajo está ahí ahora mismo. Se pausa con la
+   pestaña oculta (ver 'visibilitychange' en flujo.js) y queda cubierto
+   por prefers-reduced-motion más abajo. */
+@keyframes oc-flujo-avance {
+  to { stroke-dashoffset: -28; }
+}
+.oc-flujo-cable--activo {
+  stroke-dasharray: 6 8;
+  animation: oc-flujo-avance 1.1s linear infinite;
+}
+html.oc-flujo-pausado .oc-flujo-cable--activo {
+  animation-play-state: paused;
+}
+
+.oc-flujo-nodo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 196px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 14px;
+  text-align: left;
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-left: 4px solid var(--nodo-color, var(--oc-border));
+  border-radius: var(--oc-radius-panel);
+  color: var(--oc-text);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  z-index: 2;
+}
+.oc-flujo-nodo::before,
+.oc-flujo-nodo::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--nodo-color, var(--oc-border));
+  transform: translateY(-50%);
+  box-shadow: 0 0 6px var(--nodo-color, transparent);
+}
+.oc-flujo-nodo::before { left: -5px; }
+.oc-flujo-nodo::after { right: -5px; }
+.oc-flujo-nodo--entrada::before,
+.oc-flujo-nodo--entregado::after {
+  display: none;
+}
+.oc-flujo-nodo:disabled {
+  cursor: default;
+}
+.oc-flujo-nodo:not(:disabled):hover,
+.oc-flujo-nodo:not(:disabled):focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--oc-accent-cyan);
+  box-shadow: 0 0 12px var(--oc-accent-cyan-glow), 0 6px 16px rgba(0, 0, 0, 0.4);
+  outline: none;
+}
+.oc-flujo-nodo--arrastrando {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+  cursor: grabbing;
+}
+.oc-flujo-nodo--registro {
+  width: 180px;
+  min-height: 48px;
+  padding: 6px 12px;
+}
+.oc-flujo-nodo--proximamente {
+  opacity: 0.5;
+}
+.oc-flujo-nodo--atenuado {
+  opacity: 0.55;
+}
+.oc-flujo-nodo-titulo {
+  font-family: var(--oc-font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.oc-flujo-nodo-subtitulo {
+  font-size: 11px;
+  color: var(--oc-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.oc-flujo-nodo-entrando {
+  opacity: 0;
+  animation: oc-flujo-nodo-in var(--oc-dur-med) var(--oc-ease-out) both;
+}
+@keyframes oc-flujo-nodo-in {
+  from { opacity: 0; scale: 0.95; }
+  to { opacity: 1; scale: 1; }
+}
+
+/* ---- Panel lateral (resumen + siguiente paso), plegable ----
+   Se posiciona flotando sobre el borde derecho del lienzo (no como
+   hermano flex) para poder plegarse con `translate` sin que el
+   lienzo tenga que resolver su ancho (nunca animar width/margin). */
+.oc-flujo-panel-lateral {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 260px;
+  border-left: 1px solid var(--oc-border);
+  background: var(--oc-surface);
+  box-shadow: -8px 0 20px rgba(0, 0, 0, 0.25);
+  transition: translate var(--oc-dur-med) var(--oc-ease-out);
+  z-index: 4;
+}
+.oc-flujo-panel-lateral--cerrado {
+  translate: 260px 0;
+}
+.oc-flujo-panel-toggle {
+  position: absolute;
+  top: 12px;
+  left: -14px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  z-index: 3;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.oc-flujo-panel-lateral--cerrado .oc-flujo-panel-toggle {
+  rotate: 180deg;
+}
+.oc-flujo-panel-toggle:hover {
+  color: var(--oc-accent-cyan);
+  border-color: var(--oc-accent-cyan);
+}
+.oc-flujo-panel-contenido {
+  padding: 20px 18px;
+  overflow-y: auto;
+  height: 100%;
+}
+.oc-flujo-panel-contenido h3 {
+  font-family: var(--oc-font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--oc-text-muted);
+  margin: 20px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--oc-border);
+}
+.oc-flujo-panel-contenido h3:first-child {
+  margin-top: 0;
+}
+.oc-flujo-panel-dato {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  padding: 5px 0;
+}
+.oc-flujo-panel-dato-label {
+  color: var(--oc-text-muted);
+}
+.oc-flujo-siguiente-paso {
+  font-size: 13px;
+  color: var(--oc-accent-gold);
+  background: var(--oc-accent-gold-glow);
+  border: 1px solid var(--oc-accent-gold-border);
+  border-radius: var(--oc-radius);
+  padding: 10px 12px;
+  margin: 0;
+}
+
+/* ============================================================
+   FOCO VISIBLE — teclado. Anillo cian; no aparece con el mouse.
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid var(--oc-accent-cyan);
+  outline-offset: 2px;
+}
+.oc-input:focus-visible,
+select.oc-input:focus-visible {
+  outline: none; /* el foco de inputs ya usa borde + glow en .oc-input:focus */
+}
+
+/* ============================================================
+   MOVIMIENTO — entradas de flotantes y cambio de mes
+   (ver obracore-motion). Son elementos nuevos en cada render, así
+   que la animación corre sola al crearse; no hace falta JS extra.
+   ============================================================ */
+@keyframes oc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes oc-pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes oc-cell-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+/* Único loop de animación del sistema: el punto "en vivo" de una
+   actividad en_ejecucion (ver .oc-evt-chip--en_ejecucion). Nunca se
+   usa para feedback puntual, solo para un estado que de verdad sigue
+   en curso; se detiene por completo bajo prefers-reduced-motion. */
+@keyframes oc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.oc-day-cell {
+  animation: oc-cell-in var(--oc-dur-med) var(--oc-ease-out) both;
+}
+.oc-cotizacion-dropdown,
+.oc-modal {
+  animation: oc-pop-in var(--oc-dur-med) var(--oc-ease-out) both;
+}
+.oc-modal-overlay {
+  animation: oc-fade-in var(--oc-dur-med) ease both;
+}
+
+/* ============================================================
+   REDUCED MOTION — con esta preferencia las cosas aparecen en su
+   estado final; la información no depende de ver la animación.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

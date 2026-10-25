@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObraCore</title>
+
+<!-- Única fuente externa permitida: Google Fonts (Space Grotesk para UI, IBM Plex Mono para datos/técnico) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="oc-app">
+
+  <!-- ============================================================
+       1. NAVBAR
+       ============================================================ -->
+  <header id="oc-navbar">
+    <div id="oc-logo">Obra<span>Core</span></div>
+
+    <!-- Los dos primeros ya tienen vista real (ver router en el script);
+         los otros dos siguen sin pantalla, deshabilitados con tooltip. -->
+    <ul id="oc-nav-sections">
+      <li><button type="button" class="oc-active" data-nav="calendario" data-route="#/calendario" data-i18n="nav.calendario">Calendario</button></li>
+      <li><button type="button" data-nav="flujo" data-route="#/flujo" data-i18n="nav.flujo">Flujo de trabajo</button></li>
+      <li><button type="button" data-nav="tercero" data-i18n="nav.tercero" disabled>Tercero</button></li>
+      <li><button type="button" data-nav="cuarto" data-i18n="nav.cuarto" disabled>Cuarto</button></li>
+    </ul>
+
+    <!-- Selector de idioma: la traducción real la maneja i18n.js -->
+    <div id="oc-lang-switch" role="group" data-i18n-aria="lang.aria" aria-label="Idioma">
+      <button type="button" class="oc-lang-btn oc-active" data-lang="es">ES</button>
+      <button type="button" class="oc-lang-btn" data-lang="en">EN</button>
+    </div>
+
+    <!-- TEMPORAL: sin destino todavía. Sección de registro/cuenta de usuario. -->
+    <a href="#" id="oc-user-link" data-i18n-aria="user.aria" aria-label="Registro">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.4c-3.3 0-9.8 1.6-9.8 4.9v2.4h19.6v-2.4c0-3.3-6.5-4.9-9.8-4.9z"/></svg>
+    </a>
+  </header>
+
+  <!-- ============================================================
+       2. SIDEBAR — explorador de proyectos (cliente > proyecto >
+       etapas > registros), construido desde OCStore
+       ============================================================ -->
+  <nav id="oc-sidebar">
+    <div id="oc-sidebar-title" data-i18n="sidebar.title">Explorador</div>
+    <div id="oc-sidebar-toolbar">
+      <button type="button" class="oc-btn oc-btn-primary" id="oc-btn-nuevo-proyecto" data-i18n="sidebar.nuevoProyecto">+ Nuevo proyecto</button>
+      <input type="text" class="oc-input" id="oc-tree-filter-texto" data-i18n-aria="sidebar.filtro.texto" aria-label="Buscar proyecto o cliente..." placeholder="Buscar proyecto o cliente...">
+      <select class="oc-input" id="oc-tree-filter-estado">
+        <option value="" data-i18n="sidebar.filtro.estadoTodos">Todos los estados</option>
+        <option value="prospecto" data-i18n="proyecto.estado.prospecto">Prospecto</option>
+        <option value="activo" data-i18n="proyecto.estado.activo">Activo</option>
+        <option value="pausado" data-i18n="proyecto.estado.pausado">Pausado</option>
+        <option value="cerrado" data-i18n="proyecto.estado.cerrado">Cerrado</option>
+        <option value="cancelado" data-i18n="proyecto.estado.cancelado">Cancelado</option>
+      </select>
+    </div>
+    <ul class="oc-tree" id="oc-tree-root"></ul>
+  </nav>
+
+  <!-- ============================================================
+       3. PANEL CENTRAL — calendario
+       ============================================================ -->
+  <main id="oc-main">
+    <section id="oc-calendar-panel">
+      <div id="oc-cal-header">
+        <div id="oc-cal-title"></div>
+        <div id="oc-cal-nav">
+          <button type="button" class="oc-nav-btn" id="oc-cal-prev" data-i18n-aria="cal.prevAria" aria-label="Mes anterior">
+            <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+          </button>
+          <button type="button" class="oc-nav-btn" id="oc-cal-next" data-i18n-aria="cal.nextAria" aria-label="Mes siguiente">
+            <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="oc-cal-weekdays">
+        <span data-i18n-list="cal.weekdays" data-i18n-index="0">L</span><span data-i18n-list="cal.weekdays" data-i18n-index="1">M</span><span data-i18n-list="cal.weekdays" data-i18n-index="2">M</span><span data-i18n-list="cal.weekdays" data-i18n-index="3">J</span><span data-i18n-list="cal.weekdays" data-i18n-index="4">V</span><span data-i18n-list="cal.weekdays" data-i18n-index="5">S</span><span data-i18n-list="cal.weekdays" data-i18n-index="6">D</span>
+      </div>
+      <div id="oc-cal-grid"></div>
+    </section>
+
+    <!-- ============================================================
+         3b. PANEL CENTRAL — flujo de trabajo (vista general + detalle
+         por proyecto). Oculto por defecto; el router en el script
+         alterna este panel con #oc-calendar-panel según el hash.
+         ============================================================ -->
+    <section id="oc-flujo-panel" hidden></section>
+  </main>
+
+</div>
+
+<script src="lib/jspdf.umd.min.js"></script>
+<script src="lib/jspdf.plugin.autotable.min.js"></script>
+<script src="i18n.js"></script>
+<script src="store.js"></script>
+<script src="pdfStore.js"></script>
+<script src="pdf.js"></script>
+<script src="flujo.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     ICONOS INLINE (SVG) — sin dependencias externas
+     ============================================================ */
+  var ICON_CARET = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_FOLDER = '<svg viewBox="0 0 24 24"><path d="M10 4H2v16h20V6H12z"/></svg>';
+  var ICON_MONTH = '<svg viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zM3 10v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10H3zm4 3h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z"/></svg>';
+  var ICON_LEAF = '<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+
+  /* ============================================================
+     ÁRBOL — explorador de proyectos: Mes de alta > Proyecto > Etapa >
+     Registro. Los datos vienen de OCStore.getArbolPorMes() /
+     getEtapasDeProyecto(); ya no hay datos fijos en este archivo. Las
+     carpetas de mes no se guardan: se recalculan agrupando por
+     fechaAlta cada vez que se renderiza el árbol.
+     El estado de expandido/seleccionado se recuerda en localStorage
+     (con try/catch, igual que el resto del store).
+     ============================================================ */
+  var ESTADO_ETAPA_ICONO = { completada: '✓', en_curso: '●', pendiente: '○', bloqueada: '⊘' };
+  var ETAPAS_CON_PANTALLA = ['solicitud-cotizacion', 'cotizacion', 'levantamiento-tecnico'];
+  var ESTADOS_PROYECTO_MANUALES = ['pausado', 'perdido', 'cancelado'];
+  var TREE_STATE_KEY = 'obracore.treeState';
+
+  function capitalizeFirst(str) {
+    str = str || '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // Clave de mes ('YYYY-MM') del día de hoy — usada para expandir el mes
+  // actual por default la primera vez que se abre el árbol.
+  function mesClaveHoy() {
+    return OCStore.todayISO().slice(0, 7);
+  }
+
+  function loadTreeState() {
+    try {
+      var raw = localStorage.getItem(TREE_STATE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        return { expanded: parsed.expanded || [], selected: parsed.selected || null };
+      }
+    } catch (e) {
+      // localStorage no disponible: el árbol sigue funcionando, solo
+      // sin recordar expandidos/seleccionado entre sesiones.
+    }
+    return { expanded: [], selected: null };
+  }
+
+  function saveTreeState(st) {
+    try {
+      localStorage.setItem(TREE_STATE_KEY, JSON.stringify(st));
+    } catch (e) {
+      // sin persistencia disponible; seguimos en memoria
+    }
+  }
+
+  var treeState = loadTreeState();
+
+  function isTreeExpanded(id) {
+    return treeState.expanded.indexOf(id) !== -1;
+  }
+
+  function toggleTreeExpanded(id) {
+    var idx = treeState.expanded.indexOf(id);
+    if (idx === -1) {
+      treeState.expanded.push(id);
+    } else {
+      treeState.expanded.splice(idx, 1);
+    }
+    saveTreeState(treeState);
+  }
+
+  function selectTreeRow(treeId, li) {
+    document.querySelectorAll('.oc-tree-row.oc-selected').forEach(function (el) {
+      el.classList.remove('oc-selected');
+    });
+    var row = li.firstElementChild;
+    if (row) {
+      row.classList.add('oc-selected');
+    }
+    treeState.selected = treeId;
+    saveTreeState(treeState);
+  }
+
+  function buildRegistroNode(proyectoId, etapaId, registro) {
+    var li = document.createElement('li');
+    li.className = 'oc-tree-node oc-tree-node-registro';
+    var treeId = proyectoId + '::' + etapaId + '::' + registro.id;
+    li.setAttribute('data-tree-id', treeId);
+
+    var row = document.createElement('div');
+    row.className = 'oc-tree-row oc-tree-registro';
+
+    var caret = document.createElement('span');
+    caret.className = 'oc-caret oc-caret-empty';
+    row.appendChild(caret);
+
+    var icon = document.createElement('span');
+    icon.className = 'oc-icon';
+    icon.innerHTML = ICON_LEAF;
+    row.appendChild(icon);
+
+    var label = document.createElement('span');
+    label.className = 'oc-label';
+    var texto = registro.id;
+    if (registro.tipo === 'cotizacion') {
+      texto += registro.esAdicional ? (' · ' + OC_I18N.t('cotizacion.tipo.adicional')) : (' · v' + registro.version);
+    }
+    label.textContent = texto;
+    row.appendChild(label);
+
+    if (registro.tipo === 'cotizacion' && (registro.estado === 'aceptada' || registro.estado === 'rechazada')) {
+      var estadoPill = document.createElement('span');
+      estadoPill.className = 'oc-cot-estado oc-cot-estado--' + registro.estado;
+      estadoPill.textContent = OC_I18N.t('cotizacion.estado.' + registro.estado);
+      row.appendChild(estadoPill);
+    }
+
+    row.addEventListener('click', function (e) {
+      e.stopPropagation();
+      selectTreeRow(treeId, li);
+      if (registro.tipo === 'solicitud') {
+        window.location.href = 'OC_SOLICITUD.html?id=' + encodeURIComponent(registro.id);
+      } else if (registro.tipo === 'levantamiento') {
+        window.location.href = 'OC_LEVANTAMIENTO.html?id=' + encodeURIComponent(registro.id);
+      } else if (registro.tipo === 'cotizacion') {
+        if (registro.estado === 'borrador') {
+          window.location.href = 'OC_COTIZACION.html?id=' + encodeURIComponent(registro.id);
+        } else {
+          var cot = OCStore.getCotizacion(registro.id);
+          if (cot) {
+            OCPdfStore.abrirPdf(cot.pdfKey);
+          }
+        }
+      }
+    });
+
+    li.appendChild(row);
+    return li;
+  }
+
+  function buildEtapaNode(proyectoId, etapaInfo) {
+    var li = document.createElement('li');
+    li.className = 'oc-tree-node oc-tree-node-etapa';
+    var treeId = proyectoId + '::' + etapaInfo.etapaId;
+    li.setAttribute('data-tree-id', treeId);
+
+    var esNavegable = ETAPAS_CON_PANTALLA.indexOf(etapaInfo.etapaId) !== -1;
+    var hasChildren = etapaInfo.registros.length > 0;
+    var expanded = isTreeExpanded(treeId);
+
+    var row = document.createElement('div');
+    row.className = 'oc-tree-row oc-tree-etapa' + (esNavegable ? '' : ' oc-tree-etapa--disabled');
+
+    var caret = document.createElement('span');
+    caret.className = hasChildren ? 'oc-caret' : 'oc-caret oc-caret-empty';
+    caret.innerHTML = hasChildren ? ICON_CARET : '';
+    row.appendChild(caret);
+
+    var icon = document.createElement('span');
+    icon.className = 'oc-icon oc-etapa-icon' + (etapaInfo.estado === 'bloqueada' ? ' oc-etapa-icon--bloqueada' : '');
+    icon.textContent = ESTADO_ETAPA_ICONO[etapaInfo.estado] || '○';
+    row.appendChild(icon);
+
+    var label = document.createElement('span');
+    label.className = 'oc-label';
+    label.textContent = OC_I18N.t('stage.' + etapaInfo.etapaId);
+    row.appendChild(label);
+
+    if (!esNavegable) {
+      var pronto = document.createElement('span');
+      pronto.className = 'oc-etapa-pronto';
+      pronto.textContent = OC_I18N.t('stage.pronto');
+      row.appendChild(pronto);
+      row.title = OC_I18N.t('stage.proximamente');
+    }
+
+    var childUl;
+    if (hasChildren) {
+      childUl = document.createElement('ul');
+      childUl.className = expanded ? '' : 'oc-children-hidden';
+      etapaInfo.registros.forEach(function (registro) {
+        childUl.appendChild(buildRegistroNode(proyectoId, etapaInfo.etapaId, registro));
+      });
+    }
+
+    // El caret tiene su propio manejador (toggle expandir, sin navegar)
+    // para que una etapa navegable con registros se pueda explorar sin
+    // perder el lugar; el resto de la fila sí navega si es navegable.
+    if (hasChildren) {
+      caret.addEventListener('click', function (e) {
+        e.stopPropagation();
+        selectTreeRow(treeId, li);
+        li.classList.toggle('oc-expanded');
+        childUl.classList.toggle('oc-children-hidden');
+        toggleTreeExpanded(treeId);
+      });
+    }
+
+    row.addEventListener('click', function (e) {
+      e.stopPropagation();
+      selectTreeRow(treeId, li);
+      if (esNavegable) {
+        if (etapaInfo.etapaId === 'levantamiento-tecnico') {
+          openLevantamientoFlow(proyectoId);
+          return;
+        }
+        var url = etapaInfo.etapaId === 'cotizacion' ? 'OC_COTIZACION.html' : 'OC_SOLICITUD.html';
+        window.location.href = url + '?proyecto=' + encodeURIComponent(proyectoId);
+        return;
+      }
+      if (hasChildren) {
+        li.classList.toggle('oc-expanded');
+        childUl.classList.toggle('oc-children-hidden');
+        toggleTreeExpanded(treeId);
+      }
+    });
+
+    li.appendChild(row);
+    if (hasChildren) {
+      li.appendChild(childUl);
+      if (expanded) {
+        li.classList.add('oc-expanded');
+      }
+    }
+    return li;
+  }
+
+  function buildProyectoNode(proyectoInfo) {
+    var li = document.createElement('li');
+    li.className = 'oc-tree-node oc-tree-node-proyecto';
+    var treeId = proyectoInfo.proyectoId;
+    li.setAttribute('data-tree-id', treeId);
+    var expanded = isTreeExpanded(treeId);
+    var etapas = OCStore.getEtapasDeProyecto(proyectoInfo.proyectoId);
+    var clienteNombre = (proyectoInfo.cliente && proyectoInfo.cliente.nombre) || '';
+
+    var row = document.createElement('div');
+    row.className = 'oc-tree-row';
+    // El sidebar es angosto: el tooltip trae el nombre completo, el
+    // cliente y la fecha de alta aunque el texto se corte con "…".
+    row.title = proyectoInfo.nombre
+      + (clienteNombre ? ' — ' + clienteNombre : '')
+      + ' — ' + OC_I18N.t('proyecto.tooltip.fechaAlta') + ': ' + (proyectoInfo.fechaAlta || '');
+
+    var caret = document.createElement('span');
+    caret.className = 'oc-caret';
+    caret.innerHTML = ICON_CARET;
+    row.appendChild(caret);
+
+    var icon = document.createElement('span');
+    icon.className = 'oc-icon';
+    icon.innerHTML = ICON_FOLDER;
+    row.appendChild(icon);
+
+    var textWrap = document.createElement('span');
+    textWrap.className = 'oc-tree-proyecto-text';
+
+    var label = document.createElement('span');
+    label.className = 'oc-label';
+    label.textContent = proyectoInfo.nombre;
+    textWrap.appendChild(label);
+
+    var sub = document.createElement('span');
+    sub.className = 'oc-tree-proyecto-sub';
+    sub.textContent = (clienteNombre || '—') + ' · ' + proyectoInfo.proyectoId;
+    textWrap.appendChild(sub);
+
+    row.appendChild(textWrap);
+
+    var pill = document.createElement('span');
+    pill.className = 'oc-proyecto-estado oc-proyecto-estado--' + proyectoInfo.estado;
+    pill.textContent = OC_I18N.t('proyecto.estado.' + proyectoInfo.estado);
+    row.appendChild(pill);
+
+    // Sugerencia discreta: todas las cotizaciones del proyecto quedaron
+    // rechazadas. Nunca se marca "perdido" solo; esto solo abre la
+    // pregunta. No tiene caso si ya está en un estado manual.
+    if (ESTADOS_PROYECTO_MANUALES.indexOf(proyectoInfo.estado) === -1
+      && OCStore.todasCotizacionesRechazadas(proyectoInfo.proyectoId)) {
+      var avisoPerdido = document.createElement('span');
+      avisoPerdido.className = 'oc-proyecto-aviso-perdido';
+      avisoPerdido.textContent = '⚠';
+      avisoPerdido.title = OC_I18N.t('proyecto.sugerenciaPerdido.texto');
+      avisoPerdido.addEventListener('click', function (e) {
+        e.stopPropagation();
+        mostrarSugerenciaPerdido(proyectoInfo.proyectoId);
+      });
+      row.appendChild(avisoPerdido);
+    }
+
+    var btnMenu = document.createElement('button');
+    btnMenu.type = 'button';
+    btnMenu.className = 'oc-tree-menu-btn';
+    btnMenu.textContent = '⋯';
+    btnMenu.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var esManual = ESTADOS_PROYECTO_MANUALES.indexOf(proyectoInfo.estado) !== -1;
+      openProyectoMenuDropdown(btnMenu.getBoundingClientRect(), proyectoInfo.proyectoId, esManual);
+    });
+    row.appendChild(btnMenu);
+
+    row.addEventListener('click', function (e) {
+      e.stopPropagation();
+      selectTreeRow(treeId, li);
+      li.classList.toggle('oc-expanded');
+      childUl.classList.toggle('oc-children-hidden');
+      toggleTreeExpanded(treeId);
+      // En la vista de Flujo, seleccionar un proyecto en el árbol
+      // también abre su detalle (al revés, abrir un detalle selecciona
+      // el proyecto en el árbol vía selectProjectInTree). En
+      // Calendario el comportamiento no cambia.
+      if (parseRoute().vista === 'flujo') {
+        location.hash = '#/flujo/' + proyectoInfo.proyectoId;
+      }
+    });
+
+    li.appendChild(row);
+
+    var childUl = document.createElement('ul');
+    childUl.className = expanded ? '' : 'oc-children-hidden';
+    etapas.forEach(function (etapaInfo) {
+      childUl.appendChild(buildEtapaNode(proyectoInfo.proyectoId, etapaInfo));
+    });
+    li.appendChild(childUl);
+    if (expanded) {
+      li.classList.add('oc-expanded');
+    }
+
+    return li;
+  }
+
+  function buildMesNode(mesInfo, forzarExpandido) {
+    var li = document.createElement('li');
+    li.className = 'oc-tree-node oc-tree-node-mes';
+    var treeId = 'MES-' + mesInfo.clave;
+    li.setAttribute('data-tree-id', treeId);
+    var expanded = forzarExpandido || isTreeExpanded(treeId);
+
+    var row = document.createElement('div');
+    row.className = 'oc-tree-row oc-tree-mes';
+
+    var caret = document.createElement('span');
+    caret.className = 'oc-caret';
+    caret.innerHTML = ICON_CARET;
+    row.appendChild(caret);
+
+    var icon = document.createElement('span');
+    icon.className = 'oc-icon';
+    icon.innerHTML = ICON_MONTH;
+    row.appendChild(icon);
+
+    var label = document.createElement('span');
+    label.className = 'oc-label';
+    label.textContent = capitalizeFirst(OC_I18N.t('cal.months')[mesInfo.mes]) + ' ' + mesInfo.anio;
+    row.appendChild(label);
+
+    var contador = document.createElement('span');
+    contador.className = 'oc-mes-contador';
+    contador.textContent = '×' + mesInfo.proyectos.length;
+    row.appendChild(contador);
+
+    row.addEventListener('click', function (e) {
+      e.stopPropagation();
+      selectTreeRow(treeId, li);
+      li.classList.toggle('oc-expanded');
+      childUl.classList.toggle('oc-children-hidden');
+      toggleTreeExpanded(treeId);
+    });
+
+    li.appendChild(row);
+
+    var childUl = document.createElement('ul');
+    childUl.className = expanded ? '' : 'oc-children-hidden';
+    mesInfo.proyectos.forEach(function (p) {
+      childUl.appendChild(buildProyectoNode(p));
+    });
+    li.appendChild(childUl);
+    if (expanded) {
+      li.classList.add('oc-expanded');
+    }
+
+    return li;
+  }
+
+  function getTreeFilterState() {
+    var textoEl = document.getElementById('oc-tree-filter-texto');
+    var estadoEl = document.getElementById('oc-tree-filter-estado');
+    return {
+      texto: textoEl ? textoEl.value.trim().toLowerCase() : '',
+      estado: estadoEl ? estadoEl.value : ''
+    };
+  }
+
+  function filtrarArbol(arbol, filtro) {
+    if (!filtro.texto && !filtro.estado) {
+      return arbol;
+    }
+    var out = [];
+    arbol.forEach(function (mesInfo) {
+      var proyectosFiltrados = mesInfo.proyectos.filter(function (p) {
+        if (filtro.estado && p.estado !== filtro.estado) {
+          return false;
+        }
+        if (filtro.texto) {
+          var clienteNombre = (p.cliente && p.cliente.nombre) || '';
+          var hay = (p.nombre + ' ' + p.proyectoId + ' ' + clienteNombre).toLowerCase();
+          if (hay.indexOf(filtro.texto) === -1) {
+            return false;
+          }
+        }
+        return true;
+      });
+      if (proyectosFiltrados.length > 0) {
+        out.push({ anio: mesInfo.anio, mes: mesInfo.mes, clave: mesInfo.clave, proyectos: proyectosFiltrados });
+      }
+    });
+    return out;
+  }
+
+  // Primera vez que se abre el árbol en este navegador (sin nada
+  // expandido ni seleccionado todavía): el mes actual arranca expandido.
+  // De ahí en adelante se comporta como cualquier otro nodo (el toggle
+  // normal decide si queda expandido o colapsado, y eso es lo que se
+  // respeta en cargas futuras).
+  function sembrarMesActualExpandidoSiEsPrimeraVez() {
+    if (treeState.expanded.length === 0 && !treeState.selected) {
+      treeState.expanded.push('MES-' + mesClaveHoy());
+      saveTreeState(treeState);
+    }
+  }
+
+  function renderTree() {
+    var root = document.getElementById('oc-tree-root');
+    if (!root || !window.OCStore) {
+      return;
+    }
+    root.innerHTML = '';
+    sembrarMesActualExpandidoSiEsPrimeraVez();
+    var filtro = getTreeFilterState();
+    var filtroActivo = !!filtro.texto;
+    var arbol = filtrarArbol(OCStore.getArbolPorMes(), filtro);
+
+    if (arbol.length === 0) {
+      var vacio = document.createElement('li');
+      vacio.className = 'oc-tree-empty';
+      vacio.textContent = OC_I18N.t('sidebar.sinResultados');
+      root.appendChild(vacio);
+      return;
+    }
+
+    // Con el filtro de texto activo, los meses que tengan coincidencias
+    // se muestran expandidos aunque el usuario los haya dejado
+    // colapsados — sin tocar (ni persistir) su estado real guardado.
+    arbol.forEach(function (mesInfo) {
+      root.appendChild(buildMesNode(mesInfo, filtroActivo));
+    });
+  }
+
+  // Expande el cliente dueño y el proyecto mismo, lo marca seleccionado
+  // y (opcionalmente) hace scroll hasta él. La usan tanto el clic directo
+  // en el árbol como el clic en un chip de evento del calendario.
+  function selectProjectInTree(proyectoId, opts) {
+    opts = opts || {};
+    var mesTreeId = null;
+    OCStore.getArbolPorMes().forEach(function (mesInfo) {
+      if (mesInfo.proyectos.some(function (p) { return p.proyectoId === proyectoId; })) {
+        mesTreeId = 'MES-' + mesInfo.clave;
+      }
+    });
+    if (mesTreeId && treeState.expanded.indexOf(mesTreeId) === -1) {
+      treeState.expanded.push(mesTreeId);
+    }
+    if (treeState.expanded.indexOf(proyectoId) === -1) {
+      treeState.expanded.push(proyectoId);
+    }
+    treeState.selected = proyectoId;
+    saveTreeState(treeState);
+    renderTree();
+
+    var row = document.querySelector('.oc-tree [data-tree-id="' + proyectoId + '"] > .oc-tree-row');
+    if (row) {
+      row.classList.add('oc-selected');
+      if (opts.scroll) {
+        row.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }
+  // flujo.js (script aparte) llama a esta misma función al abrir un
+  // detalle, para que "abrir un detalle selecciona el proyecto en el
+  // árbol" sea exactamente el mismo mecanismo que ya usa el calendario.
+  window.selectProjectInTree = selectProjectInTree;
+
+  function initSidebarToolbar() {
+    var btnNuevo = document.getElementById('oc-btn-nuevo-proyecto');
+    if (btnNuevo) {
+      btnNuevo.addEventListener('click', function () { openNuevoProyectoModal(); });
+    }
+    var filtroTexto = document.getElementById('oc-tree-filter-texto');
+    var filtroEstado = document.getElementById('oc-tree-filter-estado');
+    function onFiltroCambio() {
+      renderTree();
+      // La vista general de Flujo usa el mismo filtro; si no está
+      // activa ahora mismo aplicarRuta() no vuelve a tocar el
+      // calendario (solo renderiza la vista que corresponda al hash).
+      if (parseRoute().vista === 'flujo') {
+        aplicarRuta();
+      }
+    }
+    if (filtroTexto) {
+      filtroTexto.addEventListener('input', onFiltroCambio);
+    }
+    if (filtroEstado) {
+      filtroEstado.addEventListener('change', onFiltroCambio);
+    }
+    document.addEventListener('oc:langchange', function () {
+      if (filtroTexto) {
+        filtroTexto.placeholder = OC_I18N.t('sidebar.filtro.texto');
+      }
+    });
+  }
+
+  /* ============================================================
+     MENÚ MANUAL DEL PROYECTO — botón "⋯" junto a la pastilla de
+     estado. Si el proyecto no está en un estado manual: Pausar /
+     Marcar como perdido / Cancelar. Si ya está en uno: solo
+     Reactivar (OCStore.reactivarProyecto, que recalcula de verdad).
+     ============================================================ */
+  var proyectoMenuDropdownEl = null;
+
+  function closeProyectoMenuDropdown() {
+    if (proyectoMenuDropdownEl && proyectoMenuDropdownEl.parentNode) {
+      proyectoMenuDropdownEl.parentNode.removeChild(proyectoMenuDropdownEl);
+    }
+    proyectoMenuDropdownEl = null;
+    document.removeEventListener('click', onDocumentClickForProyectoMenu, true);
+  }
+
+  function onDocumentClickForProyectoMenu(e) {
+    if (proyectoMenuDropdownEl && !proyectoMenuDropdownEl.contains(e.target)) {
+      closeProyectoMenuDropdown();
+    }
+  }
+
+  function openProyectoMenuDropdown(anchorRect, proyectoId, esManual) {
+    closeProyectoMenuDropdown();
+
+    var el = document.createElement('div');
+    el.className = 'oc-cotizacion-dropdown';
+
+    function addOpcion(labelKey, onClick) {
+      var fila = document.createElement('div');
+      fila.className = 'oc-dropdown-item';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'oc-dropdown-btn';
+      btn.textContent = OC_I18N.t(labelKey);
+      btn.addEventListener('click', function () {
+        closeProyectoMenuDropdown();
+        onClick();
+      });
+      fila.appendChild(btn);
+      el.appendChild(fila);
+    }
+
+    if (esManual) {
+      addOpcion('proyecto.menu.reactivar', function () { OCStore.reactivarProyecto(proyectoId); });
+    } else {
+      addOpcion('proyecto.menu.pausar', function () { OCStore.actualizarProyecto(proyectoId, { estado: 'pausado' }); });
+      addOpcion('proyecto.menu.marcarPerdido', function () { OCStore.actualizarProyecto(proyectoId, { estado: 'perdido' }); });
+      addOpcion('proyecto.menu.cancelar', function () { OCStore.actualizarProyecto(proyectoId, { estado: 'cancelado' }); });
+    }
+
+    document.body.appendChild(el);
+    proyectoMenuDropdownEl = el;
+
+    var elRect = el.getBoundingClientRect();
+    var left = Math.min(anchorRect.left, window.innerWidth - elRect.width - 12);
+    var top = Math.min(anchorRect.bottom + 6, window.innerHeight - elRect.height - 12);
+    left = Math.max(12, left);
+    top = Math.max(12, top);
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+
+    setTimeout(function () {
+      document.addEventListener('click', onDocumentClickForProyectoMenu, true);
+    }, 0);
+  }
+
+  // Sugerencia discreta (nunca automática) de marcar el proyecto como
+  // perdido: se dispara desde el aviso "⚠" del árbol o justo después de
+  // registrar el rechazo que deja todas sus cotizaciones rechazadas.
+  function mostrarSugerenciaPerdido(proyectoId) {
+    var overlay = document.createElement('div');
+    overlay.className = 'oc-modal-overlay';
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) {
+        cerrarModalGenerico(overlay);
+      }
+    });
+
+    var modal = document.createElement('div');
+    modal.className = 'oc-modal';
+
+    var titulo = document.createElement('h3');
+    titulo.textContent = OC_I18N.t('proyecto.sugerenciaPerdido.titulo');
+    modal.appendChild(titulo);
+
+    var texto = document.createElement('p');
+    texto.textContent = OC_I18N.t('proyecto.sugerenciaPerdido.texto');
+    modal.appendChild(texto);
+
+    var acciones = document.createElement('div');
+    acciones.className = 'oc-modal-actions';
+
+    var btnNoAhora = document.createElement('button');
+    btnNoAhora.type = 'button';
+    btnNoAhora.className = 'oc-btn oc-btn-secondary';
+    btnNoAhora.textContent = OC_I18N.t('proyecto.sugerenciaPerdido.noAhora');
+    btnNoAhora.addEventListener('click', function () { cerrarModalGenerico(overlay); });
+    acciones.appendChild(btnNoAhora);
+
+    var btnMarcar = document.createElement('button');
+    btnMarcar.type = 'button';
+    btnMarcar.className = 'oc-btn oc-btn-primary';
+    btnMarcar.textContent = OC_I18N.t('proyecto.menu.marcarPerdido');
+    btnMarcar.addEventListener('click', function () {
+      OCStore.actualizarProyecto(proyectoId, { estado: 'perdido' });
+      cerrarModalGenerico(overlay);
+    });
+    acciones.appendChild(btnMarcar);
+
+    modal.appendChild(acciones);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+  }
+
+  /* ============================================================
+     NAVBAR — Calendario y Flujo de trabajo navegan por hash (ver
+     router más abajo); los otros dos siguen deshabilitados.
+     ============================================================ */
+  function initNavbar() {
+    document.querySelectorAll('#oc-nav-sections button[data-route]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        location.hash = btn.getAttribute('data-route');
+      });
+    });
+    document.querySelectorAll('#oc-nav-sections button[disabled]').forEach(function (btn) {
+      btn.title = OC_I18N.t('stage.proximamente');
+    });
+    document.addEventListener('oc:langchange', function () {
+      document.querySelectorAll('#oc-nav-sections button[disabled]').forEach(function (btn) {
+        btn.title = OC_I18N.t('stage.proximamente');
+      });
+    });
+    // El selector ES/EN lo maneja OC_I18N (ver i18n.js)
+  }
+
+  /* ============================================================
+     ROUTER — #/calendario (por defecto) · #/flujo · #/flujo/PRJ-XXXX.
+     Único punto que decide qué panel central se muestra; renderAll()
+     llama a aplicarRuta() en vez de renderCalendar() directo para que
+     tanto 'oc:dataChange' como 'oc:langchange' queden conscientes de
+     la vista activa sin duplicar ese enganche.
+     ============================================================ */
+  function parseRoute() {
+    var hash = location.hash || '#/calendario';
+    var m = hash.match(/^#\/flujo\/(PRJ-\d+)$/);
+    if (m) {
+      return { vista: 'flujo', proyectoId: m[1] };
+    }
+    if (hash === '#/flujo') {
+      return { vista: 'flujo', proyectoId: null };
+    }
+    return { vista: 'calendario', proyectoId: null };
+  }
+
+  function actualizarBotonesNavActivos(vista) {
+    document.querySelectorAll('#oc-nav-sections button[data-route]').forEach(function (btn) {
+      btn.classList.toggle('oc-active', btn.getAttribute('data-nav') === vista);
+    });
+  }
+
+  function animarEntradaVista(panel) {
+    panel.classList.remove('oc-vista-entrando');
+    // Forzar reflow para poder reiniciar la animación si se vuelve a
+    // entrar a la misma vista (ej. cambiar de proyecto en Flujo).
+    void panel.offsetWidth;
+    panel.classList.add('oc-vista-entrando');
+  }
+
+  function aplicarRuta() {
+    var ruta = parseRoute();
+    var panelCal = document.getElementById('oc-calendar-panel');
+    var panelFlujo = document.getElementById('oc-flujo-panel');
+    panelCal.hidden = ruta.vista !== 'calendario';
+    panelFlujo.hidden = ruta.vista !== 'flujo';
+    actualizarBotonesNavActivos(ruta.vista);
+    if (ruta.vista === 'calendario') {
+      animarEntradaVista(panelCal);
+      renderCalendar();
+    } else {
+      animarEntradaVista(panelFlujo);
+      if (window.OCFlujo) {
+        OCFlujo.render(panelFlujo, ruta, getTreeFilterState());
+      }
+    }
+  }
+
+  function initRouter() {
+    if (!location.hash) {
+      history.replaceState(null, '', '#/calendario');
+    }
+    window.addEventListener('hashchange', aplicarRuta);
+  }
+
+  /* ============================================================
+     MENÚ RADIAL DE ETAPAS ("array polar") — se abre al hacer clic
+     sobre un chip de evento o se resuelve desde la lista de eventos
+     del día; siempre recibe un proyectoId ya conocido (ver sección
+     de calendario). Las 7 etapas vienen de OCStore.STAGE_IDS; las
+     que todavía no tienen pantalla propia se muestran deshabilitadas.
+     ============================================================ */
+  function onStageSelected(stageId, proyectoId, cell) {
+    if (stageId === 'solicitud-cotizacion') {
+      openSolicitudFlow(proyectoId, cell);
+      return;
+    }
+    if (stageId === 'levantamiento-tecnico') {
+      openLevantamientoFlow(proyectoId);
+      return;
+    }
+    // Sin pantalla propia todavía (ver ETAPAS_CON_PANTALLA): no debería
+    // llegar aquí porque el fan las deshabilita, pero se deja el log
+    // como red de seguridad.
+    console.log('[ObraCore] Etapa seleccionada:', stageId, '- proyecto', proyectoId);
+  }
+
+  /* ============================================================
+     ETAPA 3 "LEVANTAMIENTO TÉCNICO" — 1:1 con el proyecto, igual que
+     Solicitud: si ya existe un levantamiento vigente lo abre, si no,
+     abre la pantalla en modo creación.
+     ============================================================ */
+  function openLevantamientoFlow(proyectoId) {
+    var lev = OCStore.getLevantamientoPorProyecto(proyectoId);
+    if (lev) {
+      window.location.href = 'OC_LEVANTAMIENTO.html?proyecto=' + encodeURIComponent(proyectoId) + '&id=' + encodeURIComponent(lev.id);
+    } else {
+      window.location.href = 'OC_LEVANTAMIENTO.html?proyecto=' + encodeURIComponent(proyectoId);
+    }
+  }
+
+  /* ============================================================
+     ETAPA 1 "SOLICITUD DE COTIZACIÓN" — la relación proyecto<->
+     solicitud es 1:1, así que no hace falta un selector: si el
+     proyecto no tiene solicitud todavía abre una en blanco, si ya
+     tiene, abre esa.
+     ============================================================ */
+  function openSolicitudFlow(proyectoId) {
+    var sol = OCStore.getSolicitudPorProyecto(proyectoId);
+    if (sol) {
+      window.location.href = 'OC_SOLICITUD.html?proyecto=' + encodeURIComponent(proyectoId) + '&id=' + encodeURIComponent(sol.id);
+    } else {
+      window.location.href = 'OC_SOLICITUD.html?proyecto=' + encodeURIComponent(proyectoId);
+    }
+  }
+
+  /* ============================================================
+     ETAPA "COTIZACIÓN" — desplegable anclado a la pastilla (no
+     navega directo). Ofrece hasta 3 opciones según el día:
+     "Cotizar" (siempre), "Ir a cotización" (si hay exactamente 1
+     cotización vigente) y "Ver lista de cotizaciones" (si hay 2+).
+     ============================================================ */
+  function formatoMonedaSimple(valor, moneda) {
+    return window.OCPdf ? OCPdf.formatoMoneda(valor, moneda) : ('$ ' + (valor || 0).toFixed(2));
+  }
+
+  function estadoSolicitudActiva(sol) {
+    return sol.estado !== 'rechazada' && sol.estado !== 'cancelada';
+  }
+
+  function abrirCotizacionDesdeItem(cot) {
+    if (cot.estado === 'borrador') {
+      window.location.href = 'OC_COTIZACION.html?id=' + encodeURIComponent(cot.id);
+    } else {
+      OCPdfStore.abrirPdf(cot.pdfKey);
+    }
+  }
+
+  var cotizacionDropdownEl = null;
+
+  function closeCotizacionDropdown() {
+    if (cotizacionDropdownEl && cotizacionDropdownEl.parentNode) {
+      cotizacionDropdownEl.parentNode.removeChild(cotizacionDropdownEl);
+    }
+    cotizacionDropdownEl = null;
+    document.removeEventListener('click', onDocumentClickForCotizacionDropdown, true);
+    document.removeEventListener('keydown', onKeydownForCotizacionDropdown, true);
+  }
+
+  function onDocumentClickForCotizacionDropdown(e) {
+    if (cotizacionDropdownEl && !cotizacionDropdownEl.contains(e.target)) {
+      closeCotizacionDropdown();
+    }
+  }
+
+  function onKeydownForCotizacionDropdown(e) {
+    if (e.key === 'Escape') {
+      closeCotizacionDropdown();
+    }
+  }
+
+  function openCotizacionDropdown(anchorRect, proyectoId) {
+    closeCotizacionDropdown();
+
+    var sol = OCStore.getSolicitudPorProyecto(proyectoId);
+    var solActiva = sol && estadoSolicitudActiva(sol) ? sol : null;
+    var cotizacionesProyecto = OCStore.getCotizacionesPorProyecto(proyectoId);
+    var vigentes = cotizacionesProyecto.filter(function (c) { return c.estado !== 'sustituida'; });
+
+    var el = document.createElement('div');
+    el.className = 'oc-cotizacion-dropdown';
+
+    // ---- "Cotizar" ----
+    var filaCotizar = document.createElement('div');
+    filaCotizar.className = 'oc-dropdown-item';
+
+    if (!solActiva) {
+      filaCotizar.classList.add('oc-dropdown-item-disabled');
+      var aviso = document.createElement('span');
+      aviso.textContent = OC_I18N.t('cotizacion.dropdown.sinSolicitud');
+      var link = document.createElement('a');
+      link.href = '#';
+      link.className = 'oc-dropdown-link';
+      link.textContent = OC_I18N.t('cotizacion.dropdown.irEtapa1');
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        closeCotizacionDropdown();
+        openSolicitudFlow(proyectoId);
+      });
+      filaCotizar.appendChild(aviso);
+      filaCotizar.appendChild(link);
+    } else {
+      var btnCotizar = document.createElement('button');
+      btnCotizar.type = 'button';
+      btnCotizar.className = 'oc-dropdown-btn';
+      btnCotizar.textContent = OC_I18N.t('cotizacion.dropdown.cotizar');
+      btnCotizar.addEventListener('click', function () {
+        window.location.href = 'OC_COTIZACION.html?proyecto=' + encodeURIComponent(proyectoId) + '&solicitud=' + encodeURIComponent(solActiva.id);
+      });
+      filaCotizar.appendChild(btnCotizar);
+    }
+    el.appendChild(filaCotizar);
+
+    // ---- "Ir a cotización" ----
+    if (vigentes.length === 1) {
+      var cotUnica = vigentes[0];
+      var filaIr = document.createElement('div');
+      filaIr.className = 'oc-dropdown-item';
+      var btnIr = document.createElement('button');
+      btnIr.type = 'button';
+      btnIr.className = 'oc-dropdown-btn';
+      btnIr.textContent = OC_I18N.t('cotizacion.dropdown.irACotizacion');
+      btnIr.addEventListener('click', function () {
+        closeCotizacionDropdown();
+        abrirCotizacionDesdeItem(cotUnica);
+      });
+      filaIr.appendChild(btnIr);
+      el.appendChild(filaIr);
+    }
+
+    // ---- "Ver lista de cotizaciones (n)" ----
+    if (cotizacionesProyecto.length > 1) {
+      var filaLista = document.createElement('div');
+      filaLista.className = 'oc-dropdown-item';
+      var btnLista = document.createElement('button');
+      btnLista.type = 'button';
+      btnLista.className = 'oc-dropdown-btn';
+      btnLista.textContent = OC_I18N.t('cotizacion.dropdown.verLista') + ' (' + cotizacionesProyecto.length + ')';
+      btnLista.addEventListener('click', function () {
+        closeCotizacionDropdown();
+        openCotizacionesListPanel(cotizacionesProyecto);
+      });
+      filaLista.appendChild(btnLista);
+      el.appendChild(filaLista);
+    }
+
+    document.body.appendChild(el);
+    cotizacionDropdownEl = el;
+
+    var elRect = el.getBoundingClientRect();
+    var left = Math.min(anchorRect.left, window.innerWidth - elRect.width - 12);
+    var top = Math.min(anchorRect.bottom + 6, window.innerHeight - elRect.height - 12);
+    left = Math.max(12, left);
+    top = Math.max(12, top);
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+
+    setTimeout(function () {
+      document.addEventListener('click', onDocumentClickForCotizacionDropdown, true);
+      document.addEventListener('keydown', onKeydownForCotizacionDropdown, true);
+    }, 0);
+  }
+
+  /* ============================================================
+     "VER LISTA DE COTIZACIONES" — panel dentro de OC_MAIN con folio,
+     versión, tipo, cliente, total, estado y fecha de emisión, más
+     acciones por fila. Las sustituidas se muestran atenuadas y
+     agrupadas bajo su versión vigente cuando se puede reconstruir
+     la cadena (basadaEn).
+     ============================================================ */
+  var cotizacionesListPanelEl = null;
+
+  function closeCotizacionesListPanel() {
+    if (cotizacionesListPanelEl && cotizacionesListPanelEl.parentNode) {
+      cotizacionesListPanelEl.parentNode.removeChild(cotizacionesListPanelEl);
+    }
+    cotizacionesListPanelEl = null;
+  }
+
+  // El id (COT-0001, COT-0002...) es un consecutivo asignado al crear,
+  // así que ordena por creación de forma exacta — a diferencia de
+  // creadaEn, que en la semilla puede empatar al milisegundo entre
+  // varias cotizaciones creadas en la misma ráfaga síncrona.
+  function idNumCot(id) {
+    return parseInt(id.replace(/[^0-9]/g, ''), 10) || 0;
+  }
+
+  function ordenarCotizacionesParaLista(lista) {
+    var porId = {};
+    lista.forEach(function (c) { porId[c.id] = c; });
+    function raizDe(c) {
+      var actual = c;
+      while (actual.tipo === 'actualizacion' && actual.basadaEn && porId[actual.basadaEn]) {
+        actual = porId[actual.basadaEn];
+      }
+      return actual.id;
+    }
+    var grupos = {};
+    var minIdNum = {};
+    var ordenGrupos = [];
+    lista.forEach(function (c) {
+      var raiz = raizDe(c);
+      var n = idNumCot(c.id);
+      if (!grupos[raiz]) {
+        grupos[raiz] = [];
+        minIdNum[raiz] = n;
+        ordenGrupos.push(raiz);
+      } else if (n < minIdNum[raiz]) {
+        minIdNum[raiz] = n;
+      }
+      grupos[raiz].push(c);
+    });
+    // Los grupos se muestran en el orden en que se creó su miembro más
+    // antiguo — más fácil de leer que el orden "más reciente primero"
+    // de la lista original, que dejaría una adicional nueva antes que
+    // la familia original+versión de la que en realidad partió.
+    ordenGrupos.sort(function (raizA, raizB) { return minIdNum[raizA] - minIdNum[raizB]; });
+    var out = [];
+    ordenGrupos.forEach(function (raiz) {
+      grupos[raiz].sort(function (a, b) { return a.version - b.version; });
+      out = out.concat(grupos[raiz]);
+    });
+    return out;
+  }
+
+  // Modal "registrar respuesta" (aceptar/rechazar), usado desde los
+  // iconos ✓/✗ de la lista de cotizaciones. El PDF ya emitido nunca se
+  // toca; onDone corre después de un registro exitoso (para refrescar
+  // o cerrar el panel que lo abrió).
+  function abrirModalRespuestaCotizacion(cot, tipo, onDone) {
+    var overlay = document.createElement('div');
+    overlay.className = 'oc-modal-overlay';
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) {
+        cerrarModalGenerico(overlay);
+      }
+    });
+
+    var modal = document.createElement('div');
+    modal.className = 'oc-modal';
+
+    var titulo = document.createElement('h3');
+    titulo.textContent = tipo === 'aceptada' ? OC_I18N.t('cotizacion.respuesta.tituloAceptar') : OC_I18N.t('cotizacion.respuesta.tituloRechazar');
+    modal.appendChild(titulo);
+
+    function campo(labelKey, tipoInput) {
+      var field = document.createElement('div');
+      field.className = 'oc-field';
+      var label = document.createElement('label');
+      label.textContent = OC_I18N.t(labelKey);
+      var input = document.createElement('input');
+      input.type = tipoInput || 'text';
+      input.className = 'oc-input';
+      field.appendChild(label);
+      field.appendChild(input);
+      modal.appendChild(field);
+      return input;
+    }
+
+    var inputFecha = campo('cotizacion.campo.fecha', 'date');
+    inputFecha.value = OCStore.todayISO();
+
+    var selectMotivo = null;
+    if (tipo === 'rechazada') {
+      var fieldMotivo = document.createElement('div');
+      fieldMotivo.className = 'oc-field';
+      var labelMotivo = document.createElement('label');
+      labelMotivo.textContent = OC_I18N.t('cotizacion.respuesta.campo.motivo');
+      selectMotivo = document.createElement('select');
+      selectMotivo.className = 'oc-input';
+      OCStore.MOTIVOS_RECHAZO_COTIZACION.forEach(function (m) {
+        var opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = OC_I18N.t('cotizacion.respuesta.motivo.' + (m === 'sin-respuesta' ? 'sinRespuesta' : m));
+        selectMotivo.appendChild(opt);
+      });
+      fieldMotivo.appendChild(labelMotivo);
+      fieldMotivo.appendChild(selectMotivo);
+      modal.appendChild(fieldMotivo);
+    }
+
+    var fieldNota = document.createElement('div');
+    fieldNota.className = 'oc-field';
+    var labelNota = document.createElement('label');
+    labelNota.textContent = OC_I18N.t('cotizacion.respuesta.campo.nota');
+    var inputNota = document.createElement('textarea');
+    inputNota.className = 'oc-input';
+    fieldNota.appendChild(labelNota);
+    fieldNota.appendChild(inputNota);
+    modal.appendChild(fieldNota);
+
+    var acciones = document.createElement('div');
+    acciones.className = 'oc-modal-actions';
+
+    var btnCancelar = document.createElement('button');
+    btnCancelar.type = 'button';
+    btnCancelar.className = 'oc-btn oc-btn-secondary';
+    btnCancelar.textContent = OC_I18N.t('proyecto.nuevo.cancelar');
+    btnCancelar.addEventListener('click', function () { cerrarModalGenerico(overlay); });
+    acciones.appendChild(btnCancelar);
+
+    var btnGuardar = document.createElement('button');
+    btnGuardar.type = 'button';
+    btnGuardar.className = 'oc-btn oc-btn-primary';
+    btnGuardar.textContent = tipo === 'aceptada' ? OC_I18N.t('cotizacion.respuesta.accion.aceptar') : OC_I18N.t('cotizacion.respuesta.accion.rechazar');
+    btnGuardar.addEventListener('click', function () {
+      var fecha = inputFecha.value || OCStore.todayISO();
+      var nota = inputNota.value.trim();
+      try {
+        if (tipo === 'aceptada') {
+          OCStore.aceptarCotizacion(cot.id, { fecha: fecha, nota: nota });
+        } else {
+          OCStore.rechazarCotizacion(cot.id, { fecha: fecha, motivo: selectMotivo.value, nota: nota });
+        }
+      } catch (e) {
+        console.error('[ObraCore] No se pudo registrar la respuesta:', e);
+        cerrarModalGenerico(overlay);
+        return;
+      }
+      cerrarModalGenerico(overlay);
+      if (typeof onDone === 'function') {
+        onDone();
+      }
+    });
+    acciones.appendChild(btnGuardar);
+
+    modal.appendChild(acciones);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+  }
+
+  function openCotizacionesListPanel(lista) {
+    closeCotizacionesListPanel();
+
+    var overlay = document.createElement('div');
+    overlay.className = 'oc-modal-overlay';
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) {
+        closeCotizacionesListPanel();
+      }
+    });
+
+    var modal = document.createElement('div');
+    modal.className = 'oc-modal oc-modal-lista';
+
+    var titulo = document.createElement('h3');
+    titulo.textContent = OC_I18N.t('cotizacion.lista.titulo');
+    modal.appendChild(titulo);
+
+    var tabla = document.createElement('div');
+    tabla.className = 'oc-lista-cotizaciones';
+
+    var header = document.createElement('div');
+    header.className = 'oc-lista-row oc-lista-header';
+    ['cotizacion.col.folio', 'cotizacion.col.version', 'cotizacion.col.tipo', 'cotizacion.col.cliente',
+      'cotizacion.col.total', 'cotizacion.col.estado', 'cotizacion.col.fechaEmision'].forEach(function (k) {
+      var span = document.createElement('span');
+      span.textContent = OC_I18N.t(k);
+      header.appendChild(span);
+    });
+    header.appendChild(document.createElement('span'));
+    tabla.appendChild(header);
+
+    ordenarCotizacionesParaLista(lista).forEach(function (cot) {
+      var row = document.createElement('div');
+      row.className = 'oc-lista-row';
+      if (cot.estado === 'sustituida') {
+        row.classList.add('oc-lista-row-atenuada');
+      }
+
+      function addCell(texto) {
+        var span = document.createElement('span');
+        span.textContent = texto;
+        row.appendChild(span);
+      }
+      addCell(cot.folio);
+      addCell('v' + cot.version);
+      addCell(OC_I18N.t('cotizacion.tipo.' + cot.tipo));
+      addCell((cot.cliente && cot.cliente.nombre) || '—');
+      addCell(cot.totales ? formatoMonedaSimple(cot.totales.total, cot.moneda) : '—');
+
+      var estadoCell = document.createElement('span');
+      var estadoPill = document.createElement('span');
+      estadoPill.className = 'oc-cot-estado oc-cot-estado--' + cot.estado;
+      estadoPill.textContent = OC_I18N.t('cotizacion.estado.' + cot.estado);
+      estadoCell.appendChild(estadoPill);
+      row.appendChild(estadoCell);
+
+      addCell(cot.fechaEmision || '—');
+
+      var acciones = document.createElement('span');
+      acciones.className = 'oc-lista-acciones';
+
+      var btnVer = document.createElement('button');
+      btnVer.type = 'button';
+      btnVer.className = 'oc-icon-btn';
+      btnVer.title = OC_I18N.t('cotizacion.accion.verPdf');
+      btnVer.textContent = '⧉';
+      btnVer.disabled = !cot.pdfKey;
+      btnVer.addEventListener('click', function () { OCPdfStore.abrirPdf(cot.pdfKey); });
+      acciones.appendChild(btnVer);
+
+      var btnAbrir = document.createElement('button');
+      btnAbrir.type = 'button';
+      btnAbrir.className = 'oc-icon-btn';
+      btnAbrir.title = OC_I18N.t('cotizacion.accion.abrir');
+      btnAbrir.textContent = '↗';
+      btnAbrir.addEventListener('click', function () {
+        closeCotizacionesListPanel();
+        abrirCotizacionDesdeItem(cot);
+      });
+      acciones.appendChild(btnAbrir);
+
+      var btnActualizar = document.createElement('button');
+      btnActualizar.type = 'button';
+      btnActualizar.className = 'oc-icon-btn';
+      btnActualizar.title = OC_I18N.t('cotizacion.accion.actualizar');
+      btnActualizar.textContent = '↻';
+      btnActualizar.disabled = (cot.estado === 'borrador' || cot.estado === 'sustituida');
+      btnActualizar.addEventListener('click', function () {
+        window.location.href = 'OC_COTIZACION.html?base=' + encodeURIComponent(cot.id) + '&modo=version';
+      });
+      acciones.appendChild(btnActualizar);
+
+      var btnAdicional = document.createElement('button');
+      btnAdicional.type = 'button';
+      btnAdicional.className = 'oc-icon-btn';
+      btnAdicional.title = OC_I18N.t('cotizacion.accion.adicional');
+      btnAdicional.textContent = '+';
+      btnAdicional.disabled = cot.estado === 'borrador';
+      btnAdicional.addEventListener('click', function () {
+        window.location.href = 'OC_COTIZACION.html?base=' + encodeURIComponent(cot.id) + '&modo=adicional';
+      });
+      acciones.appendChild(btnAdicional);
+
+      var btnAceptarCliente = document.createElement('button');
+      btnAceptarCliente.type = 'button';
+      btnAceptarCliente.className = 'oc-icon-btn';
+      btnAceptarCliente.title = OC_I18N.t('cotizacion.respuesta.accion.aceptar');
+      btnAceptarCliente.textContent = '✓';
+      btnAceptarCliente.disabled = cot.estado !== 'emitida';
+      btnAceptarCliente.addEventListener('click', function () {
+        abrirModalRespuestaCotizacion(cot, 'aceptada', function () {
+          closeCotizacionesListPanel();
+        });
+      });
+      acciones.appendChild(btnAceptarCliente);
+
+      var btnRechazarCliente = document.createElement('button');
+      btnRechazarCliente.type = 'button';
+      btnRechazarCliente.className = 'oc-icon-btn';
+      btnRechazarCliente.title = OC_I18N.t('cotizacion.respuesta.accion.rechazar');
+      btnRechazarCliente.textContent = '✗';
+      btnRechazarCliente.disabled = cot.estado !== 'emitida';
+      btnRechazarCliente.addEventListener('click', function () {
+        abrirModalRespuestaCotizacion(cot, 'rechazada', function () {
+          closeCotizacionesListPanel();
+          if (OCStore.todasCotizacionesRechazadas(cot.proyectoId)) {
+            mostrarSugerenciaPerdido(cot.proyectoId);
+          }
+        });
+      });
+      acciones.appendChild(btnRechazarCliente);
+
+      row.appendChild(acciones);
+      tabla.appendChild(row);
+    });
+
+    modal.appendChild(tabla);
+
+    var accionesModal = document.createElement('div');
+    accionesModal.className = 'oc-modal-actions';
+    var btnCerrar = document.createElement('button');
+    btnCerrar.type = 'button';
+    btnCerrar.className = 'oc-btn oc-btn-secondary';
+    btnCerrar.textContent = OC_I18N.t('cotizacion.accion.cancelar');
+    btnCerrar.addEventListener('click', closeCotizacionesListPanel);
+    accionesModal.appendChild(btnCerrar);
+    modal.appendChild(accionesModal);
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    cotizacionesListPanelEl = overlay;
+  }
+
+  var FAN_RADIUS = 170;
+  var FAN_PILL_W = 190;       // ancho fijo cómodo para "Comisionamiento y calidad"
+  var FAN_PILL_H = 34;
+  var FAN_SPAN_DEG = 120;     // arco total: de -60° a +60° respecto a la horizontal
+  var FAN_STAGGER_MS = 30;
+  var FAN_VIEWPORT_MARGIN = 12;
+
+  var fanEl = null;
+  var fanActiveCell = null;
+
+  function closeFan() {
+    if (fanEl && fanEl.parentNode) {
+      fanEl.parentNode.removeChild(fanEl);
+    }
+    fanEl = null;
+    fanActiveCell = null;
+  }
+
+  // Clic afuera de la celda activa y afuera del propio menú = cerrar.
+  // Es el único mecanismo de cierre ahora que el menú se abre con clic
+  // (ya no depende de que el mouse "salga" de una zona).
+  function onDocumentClickForFan(e) {
+    if (!fanEl) {
+      return;
+    }
+    var target = e.target;
+    if (fanActiveCell && fanActiveCell.contains(target)) {
+      return;
+    }
+    if (fanEl.contains(target)) {
+      return;
+    }
+    closeFan();
+  }
+
+  function openFan(cell, proyectoId) {
+    closeFan();
+
+    var etapas = OCStore.getEtapasDeProyecto(proyectoId);
+
+    var rect = cell.getBoundingClientRect();
+    var pivotY = rect.top + rect.height / 2;
+    var pivotX = rect.right;
+    var side = 1; // 1 = abre hacia la derecha, -1 = espejo hacia la izquierda
+
+    // Columna derecha (o cualquier celda cuyo abanico se saldría del
+    // viewport): invierte el pivote al borde izquierdo y abre en espejo.
+    if (pivotX + FAN_RADIUS + FAN_PILL_W + FAN_VIEWPORT_MARGIN > window.innerWidth) {
+      side = -1;
+      pivotX = rect.left;
+    }
+
+    var n = etapas.length;
+    var stepDeg = FAN_SPAN_DEG / (n - 1); // 20°, fijo: el paso NUNCA se comprime (ver nota abajo)
+    var startDegBase = -FAN_SPAN_DEG / 2;   // -60°
+    var maxDownDegBase = FAN_SPAN_DEG / 2;  // +60°
+
+    // Última fila visible (o cualquier celda cerca del borde inferior):
+    // rota el arco entero hacia arriba lo justo para que la pastilla más
+    // baja no se salga del viewport (resuelto con asin, no con una
+    // aproximación lineal). El giro tiene un tope geométrico: el hueco
+    // entre dos pastillas contiguas es proporcional a cos(ángulo) y se va
+    // cerrando a medida que el arco se acerca a la vertical, así que un
+    // giro grande hace que las primeras pastillas del arco se encimen
+    // entre sí. maxSafeOffset es el mayor giro que todavía deja un
+    // mínimo de aire (FAN_MIN_GAP) entre la pastilla más comprometida y
+    // su vecina; si el hueco por tapar es mayor que eso, se prioriza que
+    // no se vean encimadas por sobre eliminar el recorte del todo.
+    var limitBelow = window.innerHeight - FAN_VIEWPORT_MARGIN;
+    var offsetDeg = 0;
+    var maxSinAllowed = (limitBelow - pivotY - FAN_PILL_H / 2) / FAN_RADIUS;
+    if (maxSinAllowed < 1 && Math.sin(maxDownDegBase * Math.PI / 180) > maxSinAllowed) {
+      var allowedDeg = Math.asin(Math.max(-1, maxSinAllowed)) * 180 / Math.PI;
+      var neededOffset = maxDownDegBase - allowedDeg;
+
+      var pairCenterDeg = startDegBase + stepDeg / 2; // -50°: el par más cercano a la vertical al girar hacia arriba
+      var chordFactor = 2 * FAN_RADIUS * Math.sin(stepDeg * Math.PI / 360); // = 2R·sin(paso/2)
+      var FAN_MIN_GAP = 3;
+      var cosNeeded = (FAN_PILL_H + FAN_MIN_GAP) / chordFactor;
+      var maxSafeOffset = cosNeeded >= 1 ? 0 :
+        Math.max(0, pairCenterDeg + Math.acos(cosNeeded) * 180 / Math.PI);
+
+      offsetDeg = Math.min(neededOffset, maxSafeOffset);
+    }
+
+    var startDeg = startDegBase - offsetDeg;
+
+    var container = document.createElement('div');
+    container.className = 'oc-fan-menu';
+
+    var minX = pivotX, maxX = pivotX, minY = pivotY, maxY = pivotY;
+    var pieces = [];
+
+    etapas.forEach(function (etapaInfo, i) {
+      var stageId = etapaInfo.etapaId;
+      var esNavegable = ETAPAS_CON_PANTALLA.indexOf(stageId) !== -1;
+      var deg = startDeg + i * stepDeg;
+      var rad = deg * Math.PI / 180;
+      var cx = pivotX + side * FAN_RADIUS * Math.cos(rad);
+      var cy = pivotY + FAN_RADIUS * Math.sin(rad);
+
+      minX = Math.min(minX, cx - FAN_PILL_W / 2);
+      maxX = Math.max(maxX, cx + FAN_PILL_W / 2);
+      minY = Math.min(minY, cy - FAN_PILL_H / 2);
+      maxY = Math.max(maxY, cy + FAN_PILL_H / 2);
+
+      var lineLen = Math.hypot(cx - pivotX, cy - pivotY);
+      var lineAngle = Math.atan2(cy - pivotY, cx - pivotX) * 180 / Math.PI;
+
+      var line = document.createElement('div');
+      line.className = 'oc-fan-line';
+      line.style.left = pivotX + 'px';
+      line.style.top = pivotY + 'px';
+      line.style.width = lineLen + 'px';
+      line.style.transform = 'rotate(' + lineAngle + 'deg)';
+      line.style.transitionDelay = (i * FAN_STAGGER_MS) + 'ms';
+      container.appendChild(line);
+
+      var pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'oc-fan-pill' + (esNavegable ? '' : ' oc-fan-pill--disabled');
+      pill.textContent = OC_I18N.t('stage.' + stageId);
+      pill.disabled = !esNavegable;
+      if (!esNavegable) {
+        pill.title = OC_I18N.t('stage.proximamente');
+      }
+      pill.style.left = (cx - FAN_PILL_W / 2) + 'px';
+      pill.style.top = (cy - FAN_PILL_H / 2) + 'px';
+      pill.style.width = FAN_PILL_W + 'px';
+      pill.style.height = FAN_PILL_H + 'px';
+      pill.style.setProperty('--fan-dx', (pivotX - cx) + 'px');
+      pill.style.setProperty('--fan-dy', (pivotY - cy) + 'px');
+      pill.style.transitionDelay = (i * FAN_STAGGER_MS) + 'ms';
+      if (esNavegable) {
+        pill.addEventListener('click', function () {
+          if (stageId === 'cotizacion') {
+            // La pastilla se va a borrar con closeFan(); su posición se
+            // captura ANTES de cerrar, para anclar el desplegable ahí.
+            var anchorRect = pill.getBoundingClientRect();
+            closeFan();
+            openCotizacionDropdown(anchorRect, proyectoId);
+            return;
+          }
+          onStageSelected(stageId, proyectoId, cell);
+          closeFan();
+        });
+      }
+      container.appendChild(pill);
+
+      pieces.push(line, pill);
+    });
+
+    container.style.left = minX + 'px';
+    container.style.top = minY + 'px';
+    container.style.width = (maxX - minX) + 'px';
+    container.style.height = (maxY - minY) + 'px';
+
+    document.body.appendChild(container);
+    fanEl = container;
+    fanActiveCell = cell;
+
+    // rAF doble: asegura que el navegador ya aplicó el estado inicial
+    // (opacity:0 + translate hacia el pivote) antes de disparar la
+    // transición al estado final, si no, no se ve la animación de entrada.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        pieces.forEach(function (el) { el.classList.add('oc-fan-in'); });
+      });
+    });
+  }
+
+  /* ============================================================
+     CALENDARIO — mes real del sistema, navegable
+     ============================================================ */
+  var today = new Date();
+  var viewYear = today.getFullYear();
+  var viewMonth = today.getMonth(); // 0-11
+
+  function isSameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate();
+  }
+
+  var DAY_CHIPS_VISIBLE = 2;
+
+  /* ============================================================
+     ACCIONES DE UN CLIC SOBRE UN EVENTO — el mismo arreglo
+     {estado destino, clave i18n} lo consumen tanto el desplegable que
+     abre un clic en un chip del calendario como las filas del modal
+     "Eventos de este día". Los hitos solo ganan "Marcar hecho" (y eso
+     únicamente en el modal — ver onEventChipClick, que para hitos no
+     abre desplegable, solo navega como antes).
+     ============================================================ */
+  function accionesDisponiblesEvento(evt) {
+    if (OCStore.claseDeEvento(evt.tipo) === 'hito') {
+      return evt.estado === 'pendiente' ? [{ estado: 'hecho', labelKey: 'evento.accion.marcarHecho' }] : [];
+    }
+    if (evt.estado === 'tentativa') {
+      return [
+        { estado: 'confirmada', labelKey: 'evento.accion.confirmar' },
+        { estado: 'cancelada', labelKey: 'evento.accion.cancelar' }
+      ];
+    }
+    if (evt.estado === 'confirmada') {
+      return [
+        { estado: 'en_ejecucion', labelKey: 'evento.accion.iniciar' },
+        { estado: 'cancelada', labelKey: 'evento.accion.cancelar' }
+      ];
+    }
+    if (evt.estado === 'en_ejecucion') {
+      return [
+        { estado: 'terminada', labelKey: 'evento.accion.terminar' },
+        { estado: 'cancelada', labelKey: 'evento.accion.cancelar' }
+      ];
+    }
+    return []; // terminada/cancelada/hecho: nada que accionar
+  }
+
+  var eventoAccionesDropdownEl = null;
+
+  function closeEventoAccionesDropdown() {
+    if (eventoAccionesDropdownEl && eventoAccionesDropdownEl.parentNode) {
+      eventoAccionesDropdownEl.parentNode.removeChild(eventoAccionesDropdownEl);
+    }
+    eventoAccionesDropdownEl = null;
+    document.removeEventListener('click', onDocumentClickForEventoAcciones, true);
+  }
+
+  function onDocumentClickForEventoAcciones(e) {
+    if (eventoAccionesDropdownEl && !eventoAccionesDropdownEl.contains(e.target)) {
+      closeEventoAccionesDropdown();
+    }
+  }
+
+  function openEventoAccionesDropdown(anchorRect, evt, cellEl) {
+    closeEventoAccionesDropdown();
+
+    var el = document.createElement('div');
+    el.className = 'oc-cotizacion-dropdown';
+
+    accionesDisponiblesEvento(evt).forEach(function (accion) {
+      var fila = document.createElement('div');
+      fila.className = 'oc-dropdown-item';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'oc-dropdown-btn';
+      btn.textContent = OC_I18N.t(accion.labelKey);
+      btn.addEventListener('click', function () {
+        OCStore.actualizarEvento(evt.id, { estado: accion.estado });
+        closeEventoAccionesDropdown();
+      });
+      fila.appendChild(btn);
+      el.appendChild(fila);
+    });
+
+    var filaVer = document.createElement('div');
+    filaVer.className = 'oc-dropdown-item';
+    var btnVer = document.createElement('button');
+    btnVer.type = 'button';
+    btnVer.className = 'oc-dropdown-btn';
+    btnVer.textContent = OC_I18N.t('calendar.chip.verProyecto');
+    btnVer.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeEventoAccionesDropdown();
+      selectProjectInTree(evt.proyectoId, { scroll: true });
+      openFan(cellEl, evt.proyectoId);
+    });
+    filaVer.appendChild(btnVer);
+    el.appendChild(filaVer);
+
+    document.body.appendChild(el);
+    eventoAccionesDropdownEl = el;
+
+    var elRect = el.getBoundingClientRect();
+    var left = Math.min(anchorRect.left, window.innerWidth - elRect.width - 12);
+    var top = Math.min(anchorRect.bottom + 6, window.innerHeight - elRect.height - 12);
+    left = Math.max(12, left);
+    top = Math.max(12, top);
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+
+    setTimeout(function () {
+      document.addEventListener('click', onDocumentClickForEventoAcciones, true);
+    }, 0);
+  }
+
+  // Clic en un chip: si es una actividad operativa que todavía admite
+  // una acción (tentativa/confirmada/en_ejecucion), abre el desplegable
+  // de acciones. Para hitos o actividades ya terminadas no hay nada que
+  // accionar: el clic navega directo (seleccionar en árbol + abrir fan),
+  // igual que siempre.
+  function onEventChipClick(evt, cellEl, anchorRect) {
+    var accionable = OCStore.claseDeEvento(evt.tipo) === 'operativa'
+      && ['tentativa', 'confirmada', 'en_ejecucion'].indexOf(evt.estado) !== -1;
+    if (!accionable) {
+      selectProjectInTree(evt.proyectoId, { scroll: true });
+      openFan(cellEl, evt.proyectoId);
+      return;
+    }
+    openEventoAccionesDropdown(anchorRect, evt, cellEl);
+  }
+
+  // Construye un chip de evento: el color viene de la clase+estado (no
+  // del tipo), agrega "· día n/m" si es una actividad multi-día que
+  // toca este fechaISO, y el rojo de "vencida" se superpone encima del
+  // color normal cuando aplica.
+  function buildEventChip(evt, fechaISO, cellEl) {
+    var clase = OCStore.claseDeEvento(evt.tipo);
+    var chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'oc-evt-chip oc-evt-chip--' + (clase === 'hito' ? 'hito' : evt.estado);
+    if (OCStore.eventoVencido(evt)) {
+      chip.classList.add('oc-evt-chip--vencida');
+    }
+    var texto = OC_I18N.t('evento.tipo.' + evt.tipo) + ' · ' + evt.proyectoId;
+    var diaInfo = OCStore.diaDeActividad(evt, fechaISO);
+    if (diaInfo) {
+      texto += ' · ' + OC_I18N.t('calendar.chip.dia') + ' ' + diaInfo.dia + '/' + diaInfo.total;
+    }
+    chip.textContent = texto;
+    chip.addEventListener('click', function (e2) {
+      e2.stopPropagation();
+      onEventChipClick(evt, cellEl, chip.getBoundingClientRect());
+    });
+    return chip;
+  }
+
+  /* ============================================================
+     MENÚ DE DÍA VACÍO — clic en un día sin eventos: ofrece crear un
+     proyecto nuevo o agendar un evento sobre uno existente.
+     ============================================================ */
+  var dayEmptyMenuEl = null;
+
+  function closeDayEmptyMenu() {
+    if (dayEmptyMenuEl && dayEmptyMenuEl.parentNode) {
+      dayEmptyMenuEl.parentNode.removeChild(dayEmptyMenuEl);
+    }
+    dayEmptyMenuEl = null;
+    document.removeEventListener('click', onDocumentClickForDayEmptyMenu, true);
+  }
+
+  function onDocumentClickForDayEmptyMenu(e) {
+    if (dayEmptyMenuEl && !dayEmptyMenuEl.contains(e.target)) {
+      closeDayEmptyMenu();
+    }
+  }
+
+  function openDayEmptyMenu(cellEl, fechaISO) {
+    closeDayEmptyMenu();
+
+    var el = document.createElement('div');
+    el.className = 'oc-cotizacion-dropdown oc-day-empty-menu';
+
+    var filaNuevo = document.createElement('div');
+    filaNuevo.className = 'oc-dropdown-item';
+    var btnNuevo = document.createElement('button');
+    btnNuevo.type = 'button';
+    btnNuevo.className = 'oc-dropdown-btn';
+    btnNuevo.textContent = OC_I18N.t('calendar.diaVacio.nuevoProyecto');
+    btnNuevo.addEventListener('click', function () {
+      closeDayEmptyMenu();
+      openNuevoProyectoModal(fechaISO);
+    });
+    filaNuevo.appendChild(btnNuevo);
+    el.appendChild(filaNuevo);
+
+    var filaAgendar = document.createElement('div');
+    filaAgendar.className = 'oc-dropdown-item';
+    var btnAgendar = document.createElement('button');
+    btnAgendar.type = 'button';
+    btnAgendar.className = 'oc-dropdown-btn';
+    btnAgendar.textContent = OC_I18N.t('calendar.diaVacio.agendarEvento');
+    btnAgendar.disabled = OCStore.getProyectos().length === 0;
+    btnAgendar.addEventListener('click', function () {
+      closeDayEmptyMenu();
+      openNuevoEventoModal(fechaISO);
+    });
+    filaAgendar.appendChild(btnAgendar);
+    el.appendChild(filaAgendar);
+
+    document.body.appendChild(el);
+    dayEmptyMenuEl = el;
+
+    var rect = cellEl.getBoundingClientRect();
+    var elRect = el.getBoundingClientRect();
+    var left = Math.min(rect.left, window.innerWidth - elRect.width - 12);
+    var top = Math.min(rect.bottom + 6, window.innerHeight - elRect.height - 12);
+    left = Math.max(12, left);
+    top = Math.max(12, top);
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+
+    setTimeout(function () {
+      document.addEventListener('click', onDocumentClickForDayEmptyMenu, true);
+    }, 0);
+  }
+
+  /* ============================================================
+     LISTA DE EVENTOS DEL DÍA — clic en un día con eventos (fuera de
+     un chip) o en el chip "+N más". Elegir una fila selecciona el
+     proyecto en el árbol y abre el fan para ese proyecto, igual que
+     un clic directo en el chip correspondiente.
+     ============================================================ */
+  var dayEventsModalEl = null;
+
+  function closeDayEventsModal() {
+    if (dayEventsModalEl && dayEventsModalEl.parentNode) {
+      dayEventsModalEl.parentNode.removeChild(dayEventsModalEl);
+    }
+    dayEventsModalEl = null;
+  }
+
+  function openDayEventsModal(fechaISO, eventos) {
+    closeDayEventsModal();
+
+    var overlay = document.createElement('div');
+    overlay.className = 'oc-modal-overlay';
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) {
+        closeDayEventsModal();
+      }
+    });
+
+    var modal = document.createElement('div');
+    modal.className = 'oc-modal oc-modal-lista';
+
+    var titulo = document.createElement('h3');
+    titulo.textContent = OC_I18N.t('calendar.listaDia.titulo') + ' — ' + fechaISO;
+    modal.appendChild(titulo);
+
+    var lista = document.createElement('div');
+    lista.className = 'oc-lista-eventos';
+
+    // Tras una acción (confirmar/iniciar/terminar/cancelar/marcar hecho)
+    // se vuelve a abrir el modal con los datos frescos — más simple y
+    // seguro que parchear la fila a mano, y consistente con el resto de
+    // la app (todo re-renderiza completo, nunca parcial).
+    function refrescar() {
+      var frescos = OCStore.getEventosPorFecha(fechaISO).filter(function (e) { return e.estado !== 'cancelada'; });
+      closeDayEventsModal();
+      if (frescos.length > 0) {
+        openDayEventsModal(fechaISO, frescos);
+      }
+    }
+
+    eventos.forEach(function (evt) {
+      var proyecto = OCStore.getProyecto(evt.proyectoId);
+      var clase = OCStore.claseDeEvento(evt.tipo);
+      var row = document.createElement('div');
+      row.className = 'oc-lista-evento-row';
+
+      var tipoChip = document.createElement('span');
+      tipoChip.className = 'oc-evt-chip oc-evt-chip--' + (clase === 'hito' ? 'hito' : evt.estado);
+      if (OCStore.eventoVencido(evt)) {
+        tipoChip.classList.add('oc-evt-chip--vencida');
+      }
+      tipoChip.textContent = OC_I18N.t('evento.tipo.' + evt.tipo);
+      row.appendChild(tipoChip);
+
+      var info = document.createElement('span');
+      info.className = 'oc-lista-evento-info';
+      var hora = evt.horaInicio ? (evt.horaInicio + (evt.horaFin ? ('–' + evt.horaFin) : '')) : '';
+      var diaInfo = OCStore.diaDeActividad(evt, fechaISO);
+      var diaTxt = diaInfo ? (' · ' + OC_I18N.t('calendar.chip.dia') + ' ' + diaInfo.dia + '/' + diaInfo.total) : '';
+      info.textContent = evt.proyectoId + ' · ' + (proyecto ? proyecto.nombre : '') + (hora ? ' · ' + hora : '') + diaTxt;
+      info.style.cursor = 'pointer';
+      info.addEventListener('click', function (e) {
+        e.stopPropagation();
+        closeDayEventsModal();
+        selectProjectInTree(evt.proyectoId, { scroll: true });
+        var cellEl = document.querySelector('.oc-day-cell[data-fecha="' + fechaISO + '"]');
+        if (cellEl) {
+          openFan(cellEl, evt.proyectoId);
+        }
+      });
+      row.appendChild(info);
+
+      var acciones = accionesDisponiblesEvento(evt);
+      if (acciones.length > 0) {
+        var accionesWrap = document.createElement('span');
+        accionesWrap.className = 'oc-lista-evento-acciones';
+        acciones.forEach(function (accion) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'oc-evt-accion-btn' + (accion.estado === 'cancelada' ? ' oc-evt-accion-btn--cancelar' : '');
+          btn.textContent = OC_I18N.t(accion.labelKey);
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            OCStore.actualizarEvento(evt.id, { estado: accion.estado });
+            refrescar();
+          });
+          accionesWrap.appendChild(btn);
+        });
+        row.appendChild(accionesWrap);
+      }
+
+      lista.appendChild(row);
+    });
+
+    modal.appendChild(lista);
+
+    var accionesModal = document.createElement('div');
+    accionesModal.className = 'oc-modal-actions';
+    var btnCerrar = document.createElement('button');
+    btnCerrar.type = 'button';
+    btnCerrar.className = 'oc-btn oc-btn-secondary';
+    btnCerrar.textContent = OC_I18N.t('cotizacion.accion.cancelar');
+    btnCerrar.addEventListener('click', closeDayEventsModal);
+    accionesModal.appendChild(btnCerrar);
+    modal.appendChild(accionesModal);
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    dayEventsModalEl = overlay;
+  }
+
+  function cerrarModalGenerico(overlay) {
+    if (overlay && overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+    }
+  }
+
+  /* ============================================================
+     MODAL "NUEVO PROYECTO" — crea el proyecto (y, si viene de un día
+     del calendario, un evento de seguimiento ese día) y pasa directo
+     a la etapa 1 para capturar la solicitud.
+     ============================================================ */
+  function openNuevoProyectoModal(fechaISO) {
+    var overlay = document.createElement('div');
+    overlay.className = 'oc-modal-overlay';
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) {
+        cerrarModalGenerico(overlay);
+      }
+    });
+
+    var modal = document.createElement('div');
+    modal.className = 'oc-modal';
+
+    var titulo = document.createElement('h3');
+    titulo.textContent = OC_I18N.t('proyecto.nuevo.titulo');
+    modal.appendChild(titulo);
+
+    function campo(labelKey, tipo) {
+      var field = document.createElement('div');
+      field.className = 'oc-field';
+      var label = document.createElement('label');
+      label.textContent = OC_I18N.t(labelKey);
+      var input = document.createElement('input');
+      input.type = tipo || 'text';
+      input.className = 'oc-input';
+      field.appendChild(label);
+      field.appendChild(input);
+      modal.appendChild(field);
+      return input;
+    }
+
+    function campoSelect(labelKey, opciones) {
+      var field = document.createElement('div');
+      field.className = 'oc-field';
+      var label = document.createElement('label');
+      label.textContent = OC_I18N.t(labelKey);
+      var select = document.createElement('select');
+      select.className = 'oc-input';
+      opciones.forEach(function (opt) {
+        var option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        select.appendChild(option);
+      });
+      field.appendChild(label);
+      field.appendChild(select);
+      modal.appendChild(field);
+      return select;
+    }
+
+    var inputNombre = campo('proyecto.nuevo.campo.nombre');
+    var inputCliente = campo('proyecto.nuevo.campo.clienteNombre');
+    var inputTipo = campoSelect('proyecto.nuevo.campo.tipo', OCStore.TIPOS_PROYECTO.map(function (tp) {
+      return { value: tp.id, label: tp.nombre[OC_I18N.getLang()] || tp.nombre.es };
+    }));
+    var inputUbicacion = campo('proyecto.nuevo.campo.ubicacion');
+    // La fecha de alta siempre arranca en hoy, prellenada y editable; si
+    // el modal se abrió desde un día del calendario (fechaISO), ese día
+    // NO se usa aquí — solo sirve para el evento que se agenda abajo.
+    var inputFechaAlta = campo('proyecto.nuevo.campo.fechaAlta', 'date');
+    inputFechaAlta.value = OCStore.todayISO();
+
+    var acciones = document.createElement('div');
+    acciones.className = 'oc-modal-actions';
+
+    var btnCancelar = document.createElement('button');
+    btnCancelar.type = 'button';
+    btnCancelar.className = 'oc-btn oc-btn-secondary';
+    btnCancelar.textContent = OC_I18N.t('proyecto.nuevo.cancelar');
+    btnCancelar.addEventListener('click', function () { cerrarModalGenerico(overlay); });
+    acciones.appendChild(btnCancelar);
+
+    var btnGuardar = document.createElement('button');
+    btnGuardar.type = 'button';
+    btnGuardar.className = 'oc-btn oc-btn-primary';
+    btnGuardar.textContent = OC_I18N.t('proyecto.nuevo.guardar');
+    btnGuardar.addEventListener('click', function () {
+      var nombre = inputNombre.value.trim();
+      if (!nombre) {
+        inputNombre.classList.add('oc-input-error');
+        return;
+      }
+      var proyecto = OCStore.crearProyecto({
+        nombre: nombre,
+        cliente: { nombre: inputCliente.value.trim() || nombre },
+        tipo: inputTipo.value.trim(),
+        ubicacion: inputUbicacion.value.trim(),
+        estado: 'prospecto',
+        fechaAlta: inputFechaAlta.value || OCStore.todayISO()
+      });
+      if (fechaISO) {
+        OCStore.crearEvento({ proyectoId: proyecto.id, etapa: 'solicitud-cotizacion', tipo: 'seguimiento', fecha: fechaISO });
+      }
+      cerrarModalGenerico(overlay);
+      var url = 'OC_SOLICITUD.html?proyecto=' + encodeURIComponent(proyecto.id);
+      if (fechaISO) {
+        url += '&fecha=' + encodeURIComponent(fechaISO);
+      }
+      window.location.href = url;
+    });
+    acciones.appendChild(btnGuardar);
+
+    modal.appendChild(acciones);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+  }
+
+  /* ============================================================
+     MODAL "AGENDAR EVENTO" — sobre un proyecto existente, para un
+     día dado (desde el menú de día vacío del calendario).
+     ============================================================ */
+  function openNuevoEventoModal(fechaISO) {
+    var overlay = document.createElement('div');
+    overlay.className = 'oc-modal-overlay';
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) {
+        cerrarModalGenerico(overlay);
+      }
+    });
+
+    var modal = document.createElement('div');
+    modal.className = 'oc-modal';
+
+    var titulo = document.createElement('h3');
+    titulo.textContent = OC_I18N.t('evento.nuevo.titulo') + ' — ' + fechaISO;
+    modal.appendChild(titulo);
+
+    function campoSelect(labelKey, opciones) {
+      var field = document.createElement('div');
+      field.className = 'oc-field';
+      var label = document.createElement('label');
+      label.textContent = OC_I18N.t(labelKey);
+      var select = document.createElement('select');
+      select.className = 'oc-input';
+      opciones.forEach(function (opt) {
+        var option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        select.appendChild(option);
+      });
+      field.appendChild(label);
+      field.appendChild(select);
+      modal.appendChild(field);
+      return select;
+    }
+
+    function campoTexto(labelKey, tipo) {
+      var field = document.createElement('div');
+      field.className = 'oc-field';
+      var label = document.createElement('label');
+      label.textContent = OC_I18N.t(labelKey);
+      var input = document.createElement('input');
+      input.type = tipo || 'text';
+      input.className = 'oc-input';
+      field.appendChild(label);
+      field.appendChild(input);
+      modal.appendChild(field);
+      return input;
+    }
+
+    var proyectos = OCStore.getProyectos();
+    var selectProyecto = campoSelect('evento.nuevo.campo.proyecto', proyectos.map(function (p) {
+      return { value: p.id, label: p.id + ' · ' + p.nombre };
+    }));
+    var selectTipo = campoSelect('evento.nuevo.campo.tipo', Object.keys(OCStore.TIPOS_EVENTO).map(function (t) {
+      return { value: t, label: OC_I18N.t('evento.tipo.' + t) };
+    }));
+    var inputFechaFin = campoTexto('evento.nuevo.campo.fechaFin', 'date');
+    var inputHoraInicio = campoTexto('evento.nuevo.campo.horaInicio', 'time');
+    var inputHoraFin = campoTexto('evento.nuevo.campo.horaFin', 'time');
+    var inputCuadrilla = campoTexto('evento.nuevo.campo.cuadrilla');
+    var inputNotas = campoTexto('evento.nuevo.campo.notas');
+
+    var acciones = document.createElement('div');
+    acciones.className = 'oc-modal-actions';
+
+    var btnCancelar = document.createElement('button');
+    btnCancelar.type = 'button';
+    btnCancelar.className = 'oc-btn oc-btn-secondary';
+    btnCancelar.textContent = OC_I18N.t('proyecto.nuevo.cancelar');
+    btnCancelar.addEventListener('click', function () { cerrarModalGenerico(overlay); });
+    acciones.appendChild(btnCancelar);
+
+    var btnGuardar = document.createElement('button');
+    btnGuardar.type = 'button';
+    btnGuardar.className = 'oc-btn oc-btn-primary';
+    btnGuardar.textContent = OC_I18N.t('evento.nuevo.guardar');
+    btnGuardar.disabled = proyectos.length === 0;
+    btnGuardar.addEventListener('click', function () {
+      if (!selectProyecto.value) {
+        cerrarModalGenerico(overlay);
+        return;
+      }
+      var evento = OCStore.crearEvento({
+        proyectoId: selectProyecto.value,
+        tipo: selectTipo.value,
+        fecha: fechaISO,
+        fechaFin: inputFechaFin.value || null,
+        horaInicio: inputHoraInicio.value || null,
+        horaFin: inputHoraFin.value || null,
+        cuadrilla: inputCuadrilla.value.trim() || null,
+        notas: inputNotas.value.trim()
+      });
+      cerrarModalGenerico(overlay);
+      selectProjectInTree(evento.proyectoId, { scroll: true });
+    });
+    acciones.appendChild(btnGuardar);
+
+    modal.appendChild(acciones);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+  }
+
+  function renderCalendar() {
+    var titleEl = document.getElementById('oc-cal-title');
+    var gridEl = document.getElementById('oc-cal-grid');
+
+    // Las celdas se recrean abajo; ninguna referencia vieja debe quedar
+    // sosteniendo un menú radial abierto.
+    closeFan();
+
+    titleEl.textContent = OC_I18N.t('cal.months')[viewMonth] + ' ' + viewYear;
+    gridEl.innerHTML = '';
+
+    var firstOfMonth = new Date(viewYear, viewMonth, 1);
+    var lastOfMonth = new Date(viewYear, viewMonth + 1, 0);
+    var daysInMonth = lastOfMonth.getDate();
+
+    // JS: getDay() -> 0=domingo..6=sábado. Queremos semana L-D (0=lunes..6=domingo).
+    var firstWeekdayMonBased = (firstOfMonth.getDay() + 6) % 7;
+
+    var daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+
+    var cells = [];
+
+    // Días finales del mes anterior, para completar la primera semana
+    for (var p = firstWeekdayMonBased; p > 0; p--) {
+      cells.push({
+        dayNum: daysInPrevMonth - p + 1,
+        outside: true
+      });
+    }
+
+    // Días del mes actual
+    for (var d = 1; d <= daysInMonth; d++) {
+      cells.push({
+        dayNum: d,
+        outside: false,
+        dateObj: new Date(viewYear, viewMonth, d)
+      });
+    }
+
+    // Días iniciales del mes siguiente, para completar la última semana
+    var remainder = cells.length % 7;
+    if (remainder !== 0) {
+      var toAdd = 7 - remainder;
+      for (var n = 1; n <= toAdd; n++) {
+        cells.push({
+          dayNum: n,
+          outside: true
+        });
+      }
+    }
+
+    cells.forEach(function (cell) {
+      var cellEl = document.createElement('div');
+      cellEl.className = 'oc-day-cell';
+
+      if (cell.outside) {
+        cellEl.classList.add('oc-outside');
+      } else {
+        cellEl.classList.add('oc-current-month');
+        if (isSameDay(cell.dateObj, today)) {
+          cellEl.classList.add('oc-today');
+        }
+        cellEl.setAttribute('data-fecha', OCStore.dateToISO(cell.dateObj));
+
+        cellEl.addEventListener('click', function (e) {
+          if (e.button !== 0) {
+            return; // solo click izquierdo; derecho/rueda no llegan aquí de todos modos
+          }
+          if (fanActiveCell === cellEl) {
+            // Mismo día que ya tiene el menú abierto: toggle a cerrado.
+            closeFan();
+            return;
+          }
+          closeFan();
+          var fechaISO = OCStore.dateToISO(cell.dateObj);
+          var eventosDia = OCStore.getEventosPorFecha(fechaISO).filter(function (e) { return e.estado !== 'cancelada'; });
+          if (eventosDia.length === 0) {
+            openDayEmptyMenu(cellEl, fechaISO);
+          } else {
+            openDayEventsModal(fechaISO, eventosDia);
+          }
+        });
+      }
+
+      var numEl = document.createElement('div');
+      numEl.className = 'oc-day-number';
+      numEl.textContent = cell.dayNum;
+      cellEl.appendChild(numEl);
+
+      // Etiqueta de estado del día (Reservado/Ocupado; "Libre" no se
+      // pinta) + chips de evento. Solo en días del mes actual; los
+      // eventos cancelados no ocupan la agenda, se excluyen de la vista.
+      if (!cell.outside && window.OCStore) {
+        var fechaISO = OCStore.dateToISO(cell.dateObj);
+        var eventosDia = OCStore.getEventosPorFecha(fechaISO).filter(function (e) { return e.estado !== 'cancelada'; });
+        var estadoDia = OCStore.getEstadoDia(fechaISO);
+
+        if (estadoDia !== 'libre') {
+          var statusPill = document.createElement('span');
+          statusPill.className = 'oc-day-status oc-day-status--' + estadoDia;
+          statusPill.textContent = OC_I18N.t('dia.estado.' + estadoDia);
+          cellEl.appendChild(statusPill);
+        }
+
+        if (eventosDia.length > 0) {
+          var chipsEl = document.createElement('div');
+          chipsEl.className = 'oc-day-chips';
+
+          eventosDia.slice(0, DAY_CHIPS_VISIBLE).forEach(function (evt) {
+            chipsEl.appendChild(buildEventChip(evt, fechaISO, cellEl));
+          });
+
+          if (eventosDia.length > DAY_CHIPS_VISIBLE) {
+            var masChip = document.createElement('button');
+            masChip.type = 'button';
+            masChip.className = 'oc-evt-chip oc-evt-chip--mas';
+            masChip.textContent = '+' + (eventosDia.length - DAY_CHIPS_VISIBLE) + ' ' + OC_I18N.t('calendar.chip.mas');
+            masChip.addEventListener('click', function (e2) {
+              e2.stopPropagation();
+              openDayEventsModal(fechaISO, eventosDia);
+            });
+            chipsEl.appendChild(masChip);
+          }
+
+          cellEl.appendChild(chipsEl);
+        }
+      }
+
+      gridEl.appendChild(cellEl);
+    });
+  }
+
+  function initCalendarNav() {
+    document.getElementById('oc-cal-prev').addEventListener('click', function () {
+      viewMonth -= 1;
+      if (viewMonth < 0) {
+        viewMonth = 11;
+        viewYear -= 1;
+      }
+      renderCalendar();
+    });
+
+    document.getElementById('oc-cal-next').addEventListener('click', function () {
+      viewMonth += 1;
+      if (viewMonth > 11) {
+        viewMonth = 0;
+        viewYear += 1;
+      }
+      renderCalendar();
+    });
+  }
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  function renderAll() {
+    renderTree();
+    aplicarRuta();
+  }
+
+  initNavbar();
+  initRouter();
+  initCalendarNav();
+  initSidebarToolbar();
+  document.addEventListener('click', onDocumentClickForFan);
+
+  // El árbol y el calendario dependen de los textos traducidos (nombres
+  // de mes, etiquetas de etapa/estado), así que el primer render real
+  // ocurre recién cuando el diccionario está listo (evento 'oc:langchange',
+  // disparado por OC_I18N.init() más abajo) y luego en cada cambio de idioma.
+  document.addEventListener('oc:langchange', renderAll);
+
+  // store.js dispara esto en cada persist(): cubre cualquier mutación
+  // hecha en esta misma pestaña (crear proyecto, agendar evento, emitir
+  // cotización) sin tener que acordarse de llamar renderAll() a mano en
+  // cada sitio que mute datos.
+  document.addEventListener('oc:dataChange', renderAll);
+
+  // 'storage' avisa de cambios hechos en OTRA pestaña (es su
+  // comportamiento nativo: no dispara en la misma pestaña que escribió);
+  // 'visibilitychange' cubre el caso más común aquí, que es volver de
+  // OC_SOLICITUD.html/OC_COTIZACION.html a esta pestaña después de guardar.
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'obracore.solicitudes') {
+      renderAll();
+    }
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      renderAll();
+    }
+  });
+
+  OC_I18N.init();
+
+  // Genera los PDFs de la semilla la primera vez (no bloquea el render;
+  // solo importa que estén listos para cuando alguien de clic en "Ver
+  // PDF"). Si algo falla (IndexedDB no disponible, etc.) queda en
+  // consola, sin romper el resto de la app.
+  if (window.OCPdf) {
+    OCPdf.asegurarPdfsSemilla().catch(function (e) {
+      console.error('[ObraCore] asegurarPdfsSemilla falló:', e);
+    });
+    OCPdf.asegurarLevantamientosSemilla().catch(function (e) {
+      console.error('[ObraCore] asegurarLevantamientosSemilla falló:', e);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

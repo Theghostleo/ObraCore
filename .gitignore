@@ -1,0 +1,24 @@
+# Capturas generadas por las verificaciones con webapp-testing (se regeneran)
+screenshots/
+
+# Configuración local de Claude Code (permisos y servidor de preview de cada máquina).
+# Las skills de .claude/skills/ SÍ se versionan: documentan las convenciones del proyecto.
+.claude/settings.local.json
+.claude/launch.json
+
+# Respaldos y archivos temporales
+*_respaldo/
+*.bak
+*.tmp
+
+# Sistema operativo y editores
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# Secretos (para cuando llegue el backend con Postgres)
+.env
+.env.*
+!.env.example

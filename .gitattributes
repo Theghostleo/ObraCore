@@ -1,0 +1,9 @@
+# Todo el texto del proyecto se guarda con saltos de línea LF (como ya están los archivos),
+# para que Git en Windows no los convierta a CRLF y genere diferencias falsas.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.webp binary
+*.pdf binary
+*.ttf binary
