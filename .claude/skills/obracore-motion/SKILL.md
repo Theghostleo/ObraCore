@@ -14,11 +14,11 @@ algo: aparición, foco, cambio de estado o progreso.
 | Nombre | Valor | Uso |
 |---|---|---|
 | rápida | `0.15s ease` | Hover/foco: color, fondo, borde, glow. **Default para cualquier hover.** |
-| media | `0.2s–0.25s` | Celdas del calendario, aparición de líneas/pastillas del menú radial, desplegables |
+| media | `0.2s–0.25s` | Celdas del calendario, desplegables y menú del día |
 | lenta | `0.3s ease` | Fades de feedback (ej. "Guardado") |
 
 Curva "despliegue": `cubic-bezier(0.2, 0.8, 0.2, 1)` — entrada rápida que frena suave.
-Úsala para todo lo que **aparece desde un origen** (pastillas del abanico, menús, modales).
+Úsala para todo lo que **aparece desde un origen** (menús, desplegables, modales).
 
 Límite: ninguna transición de interfaz supera **400 ms**. Animaciones en bucle están
 permitidas solo como indicador de "esto sigue en curso ahora mismo" (nunca decorativas, nunca
@@ -44,16 +44,17 @@ Como cada render recrea los nodos, estas animaciones corren solas al crearse; no
 
 ## Patrones permitidos
 
-1. **Despliegue radial** (referencia: `.oc-fan-pill` en `styles.css`): el elemento parte de
-   su origen con `translate(var(--fan-dx), var(--fan-dy)) scale(0.75)` y `opacity: 0`, y
-   llega a `translate(0,0) scale(1)`. Para varios elementos, escalona 20–30 ms entre cada uno.
+1. **Despliegue desde un origen**: el elemento parte del punto de origen con
+   `translate(...) scale(0.75)` y `opacity: 0`, y llega a `translate(0,0) scale(1)`. Para
+   varios elementos, escalona 20–30 ms entre cada uno. (Hoy no hay ningún uso: el menú
+   radial de etapas se eliminó; los menús, el menú del día y la leyenda usan el patrón 3.)
 2. **Glow de foco**: aparece un `box-shadow` con `--oc-accent-*-glow` en 0.15s.
    No pulses el glow en bucle.
 3. **Aparición de flotantes** (desplegables, picker, modales): `opacity 0→1` +
    `translateY(4px)→0` (o `scale(.97)→1`) en 0.2s con la curva de despliegue.
    El overlay del modal solo hace fade.
 4. **Línea / escaneo**: líneas que se dibujan (`opacity` o `scaleX` desde `transform-origin: left`),
-   como las `.oc-fan-line`. Un barrido de escaneo sutil es válido para estados de carga.
+   (p. ej. los cables del Flujo). Un barrido de escaneo sutil es válido para estados de carga.
 5. **Cambio de estado de datos** (ej. un día pasa de Libre a En proceso): transición de
    color/fondo/borde en 0.25s; opcionalmente un único destello de glow. Nunca shake.
 
@@ -78,7 +79,7 @@ one-shot con el patrón 3 o 5 de arriba.
   **Nunca** `width`, `height`, `top`, `left` ni `margin` (provocan reflow).
 - Escribe las transiciones listando propiedades, igual que el código existente:
   `transition: color 0.15s ease, border-color 0.15s ease;` — no `transition: all`.
-- Animaciones de entrada controladas con una clase de estado (`.oc-fan-in`, `.oc-visible`)
+- Animaciones de entrada controladas con una clase de estado (`.oc-visible`)
   que se agrega en el siguiente frame (`requestAnimationFrame`), no con `setTimeout(…, 0)`.
 - Elementos que salen: quita la clase, espera `transitionend` (con un timeout de respaldo)
   y luego elimina el nodo.
@@ -107,5 +108,5 @@ debe depender de ver la animación.
 ## Verificación
 
 Después de cambiar animaciones, revisa en el navegador (o con la skill `webapp-testing`):
-abrir/cerrar el menú radial varias veces seguidas, cambiar de mes, abrir desplegables y
+abrir/cerrar el menú del día varias veces seguidas, cambiar de mes, abrir desplegables y
 modales, y confirmar que no quedan nodos huérfanos ni errores en consola.

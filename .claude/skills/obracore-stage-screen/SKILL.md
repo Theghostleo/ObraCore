@@ -1,14 +1,14 @@
 ---
 name: obracore-stage-screen
-description: Receta para construir una nueva pantalla de etapa de ObraCore (Levantamiento técnico, Diseño del sistema, Procura de equipos, Programación de instalación, Comisionamiento y calidad) y conectarla al menú radial, al store y a i18n. Úsala cuando se pida crear, conectar o rehacer cualquiera de las 7 etapas o una pantalla nueva tipo formulario.
+description: Receta para construir una nueva pantalla de etapa de ObraCore (Levantamiento técnico, Diseño del sistema, Procura de equipos, Programación de instalación, Comisionamiento y calidad) y conectarla a la vista de Flujo, al store y a i18n. Úsala cuando se pida crear, conectar o rehacer cualquiera de las 7 etapas o una pantalla nueva tipo formulario.
 ---
 
 # ObraCore — nueva pantalla de etapa
 
 Antes de escribir código, lee completos: `OC_SOLICITUD.html` (plantilla de referencia),
 `store.js` (entidades `Proyecto`/`Evento`, y `OCStore.STAGE_IDS`/`getEtapasDeProyecto`),
-`i18n.js`, `i18n/es.json`, y la sección del menú radial de `OC_MAIN.html` (`openFan`,
-`onStageSelected`, el árbol de proyectos). Aplica también las skills `obracore-design-tokens`
+`i18n.js`, `i18n/es.js`, y `flujo.js` (`ETAPAS_CON_PANTALLA`, `URL_POR_ETAPA`, `abrirNodo`,
+`abrirRegistro`). Aplica también las skills `obracore-design-tokens`
 y `obracore-motion`. Si tu etapa necesita un formulario de verdad (no solo 3-4 campos
 sueltos), lee también `OC_LEVANTAMIENTO.html` como referencia de etapa construida sobre
 `OCForms`/`OCPlantillas` y la skill `obracore-form-templates`.
@@ -31,9 +31,8 @@ registros (solicitud, cotizaciones, y lo que agregue tu etapa nueva).
 
 Los ids viven en un solo lugar, `OCStore.STAGE_IDS` (`store.js`) — ni esta pantalla ni
 `OC_MAIN.html` deben volver a declarar su propia lista. Actualiza esta tabla cuando
-termines una etapa, y agrega su id a `ETAPAS_CON_PANTALLA` en `OC_MAIN.html` (controla
-tanto el árbol como el fan: mientras no esté ahí, la etapa se muestra deshabilitada con
-"Próximamente" en ambos lugares).
+termines una etapa, y registra su pantalla en `flujo.js` (`ETAPAS_CON_PANTALLA` y
+`URL_POR_ETAPA`; mientras no esté ahí, la etapa se muestra deshabilitada en Flujo).
 
 ## Estructura del archivo `OC_<ETAPA>.html`
 
@@ -74,7 +73,7 @@ Reutiliza `getQueryParams()` de `OC_SOLICITUD.html`. `?proyecto=` es el parámet
 - **Ninguna pantalla toca `localStorage` directamente**: todo pasa por `window.OCStore`.
 - Cada etapa nueva agrega su entidad al mismo `state` de `store.js`, con:
   `id` con prefijo (`LEV-0001`, `DIS-`, `PRO-`, `PRG-`, `COM-`), **`proyectoId`**
-  (obligatorio — es lo que la liga al árbol y permite que `getEtapasDeProyecto` la
+  (obligatorio — es lo que la liga al proyecto y permite que `getEtapasDeProyecto` la
   encuentre), `estado` (`pendiente | en_curso | bloqueada | completada`), `responsable`,
   `datos { …específicos de la etapa… }`, `creadaEn`, `actualizadaEn`. Ya no se usa
   `solicitudId`/`fecha` como llave de búsqueda (sí puedes guardarlos como dato de
@@ -101,33 +100,34 @@ Reutiliza `getQueryParams()` de `OC_SOLICITUD.html`. `?proyecto=` es el parámet
   `OCForms`/`OCPlantillas` (`forms.js`/`plantillas.js`) y lee la skill
   `obracore-form-templates` antes de empezar. `OC_LEVANTAMIENTO.html` es la referencia.
 
-## Conexión con `OC_MAIN.html`
+## Conexión con la vista de Flujo
 
-La integración ahora es con el **árbol de proyectos** (fuente primaria) y con el **fan**
-del calendario (atajo desde un evento/chip) — ambos leen el mismo estado de
-`OCStore.getEtapasDeProyecto(proyectoId)`, así que conectar uno bien conecta el otro:
+Las etapas se abren **solo desde Flujo** (`flujo.js`, panel "Flujo de trabajo" de `OC_MAIN.html`):
+la vista general (celdas compactas por etapa) y el detalle (nodos). Ambas leen
+`OCStore.getEtapasDeProyecto(proyectoId)`. El calendario es solo agenda: un chip abre sus
+acciones y "Abrir proyecto" navega a `#/flujo/PRJ-XXXX`; no hay explorador lateral ni menú radial.
 
-1. Agrega el id de tu etapa a `ETAPAS_CON_PANTALLA` en `OC_MAIN.html`. Esto hace que:
-   - en el árbol, la fila de la etapa deje de mostrar la pastilla `PRONTO` y se vuelva
-     clickeable (navega a `'OC_<ETAPA>.html?proyecto=' + proyectoId`);
-   - en el fan, su pill deje de estar deshabilitado.
-   No necesitas tocar la geometría del árbol ni del fan para esto.
-2. En `onStageSelected(stageId, proyectoId, cell)`, agrega una rama para tu id que llame
-   a `open<Etapa>Flow(proyectoId)`, siguiendo el patrón de `openSolicitudFlow`: si
-   `getEtapasDeProyecto` ya trae un registro para tu etapa, navega a `?proyecto=&id=`;
-   si no, navega solo a `?proyecto=` (modo creación). No hace falta selector de
-   "varios registros": la convención es 1 registro vigente por etapa por proyecto (si tu
-   etapa genera varias versiones como Cotización, sigue el patrón de su dropdown en vez
-   de inventar uno nuevo).
-3. Si quieres que tu etapa también aparezca en `getEtapasDeProyecto` con sus registros
-   listados en el árbol (como hace `cotizacion` con sus versiones), agrega la rama
-   correspondiente dentro de esa función en `store.js`.
-4. No modifiques la geometría del menú radial, el árbol, ni el comportamiento de las
-   etapas existentes.
+1. En `flujo.js` agrega tu id a `ETAPAS_CON_PANTALLA` y su archivo a `URL_POR_ETAPA`. Con eso
+   el nodo/celda deja de estar deshabilitado y abre `'OC_<ETAPA>.html?proyecto=…&desde=flujo'`
+   (o `?id=…` si ya hay registro) vía `abrirEtapaSinRegistro` / `abrirRegistro`. Todas las
+   URLs salen con `desde=flujo` (ver `urlEtapa`).
+2. **"Volver" de tu pantalla:** copia el patrón de `OC_SOLICITUD.html` (`desdeFlujo`,
+   `volverUrl()`, `aplicarVolver()`): con `?desde=flujo` y un `proyectoId` conocido, el enlace
+   `#oc-back-link` y el botón Cancelar vuelven a `OC_MAIN.html#/flujo/<proyectoId>` y el texto
+   pasa a `volver.proyecto`; si no, a `OC_MAIN.html`. Conserva `desde` en cualquier
+   `replaceState` o navegación interna.
+3. La convención es 1 registro vigente por etapa por proyecto: si ya existe, el nodo abre
+   `?proyecto=&id=`; si no, solo `?proyecto=` (modo creación). Una etapa con varias versiones,
+   como Cotización, usa un desplegable propio (ver `OCUi.openCotizacionDropdown`, expuesto por
+   `OC_MAIN.html`) en vez de inventar un selector nuevo.
+4. Si quieres que tu etapa aparezca en `getEtapasDeProyecto` con sus registros como nodos hijos
+   (como hace `cotizacion` con sus versiones), agrega la rama dentro de esa función en `store.js`.
+5. No cambies el comportamiento de las etapas existentes.
 
 ## i18n
 
-- Todo texto visible lleva `data-i18n="clave"` y su entrada en **`i18n/es.json` y `i18n/en.json`**.
+- Todo texto visible lleva `data-i18n="clave"` y su entrada en **`i18n/es.js` y `i18n/en.js`** (son `.js`, no `.json`, para que la app abra con doble clic:
+  `window.OC_I18N_DICTS.<lang> = {...}`).
 - Prefijo de claves por etapa: `levantamiento.*`, `diseno.*`, `procura.*`,
   `programacion.*`, `comisionamiento.*`. Estados: `<etapa>.estado.<valor>`.
 - Las etiquetas de las 7 etapas ya están resueltas (`stage.<id>`, agregadas en el
@@ -137,12 +137,13 @@ del calendario (atajo desde un evento/chip) — ambos leen el mismo estado de
 
 ## Criterios de aceptación (verifica antes de terminar)
 
-1. Desde el árbol (etapa habilitada) o desde el fan → se crea/abre el registro ligado al
+1. Desde Flujo (nodo de la etapa, habilitado) → se crea/abre el registro ligado al
    proyecto correcto; sobrevive a recargar.
 2. Volver a entrar (mismo proyecto) abre el registro existente en vez de crear otro.
 3. La página abierta sola, sin parámetros, funciona en modo creación.
 4. ES/EN cambia todos los textos, incluidos los generados por JS.
 5. Cero errores en consola en OC_MAIN y en la pantalla nueva.
+6. "Volver" regresa al detalle del proyecto en Flujo cuando se abrió desde ahí.
 
 ## Al terminar, reporta
 

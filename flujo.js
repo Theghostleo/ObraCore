@@ -3,20 +3,22 @@
    de un proyecto por sus 7 etapas como un diagrama de nodos y cables
    (estilo Node-RED). Expone un único punto de entrada:
 
-     OCFlujo.render(contenedor, ruta, filtro)
+     OCFlujo.render(contenedor, ruta)
        ruta   -> { vista: 'flujo', proyectoId: 'PRJ-XXXX' | null }
-       filtro -> { texto, estado } (mismo shape que getTreeFilterState()
-                  de OC_MAIN.html; sin proyectoId se usa en la vista
-                  general, con proyectoId se ignora)
 
-   Todo el estado sale de OCStore; no toca localStorage salvo para
-   guardar la posición arrastrada de cada nodo
-   ('obracore.flujoPosiciones.<proyectoId>').
+   Es la única forma de llegar a las etapas de un proyecto: la vista
+   general (buscador, filtro por estado, "+ Nuevo proyecto", proyectos
+   agrupados por mes de alta) y el detalle con nodos. Todo el estado
+   sale de OCStore; localStorage solo guarda la posición arrastrada de
+   cada nodo ('obracore.flujoPosiciones.<proyectoId>') y los meses
+   abiertos/cerrados ('obracore.flujoMeses').
 
-   ETAPAS_CON_PANTALLA de abajo es una copia deliberada de la misma
-   constante en OC_MAIN.html (no hay forma de compartirla entre los
-   dos scripts sin exponerla): si se agrega una pantalla de etapa
-   nueva, actualizar ambas.
+   Las ventanas flotantes que viven en OC_MAIN.html (desplegable de
+   Cotización, menú ⋯ del proyecto, modal de "Nuevo proyecto") se usan
+   por el puente window.OCUi, que OC_MAIN.html registra al cargar.
+
+   ETAPAS_CON_PANTALLA / URL_POR_ETAPA son la única fuente: al agregar
+   una pantalla de etapa nueva, basta con registrarla aquí.
    ============================================================ */
 (function (global) {
   'use strict';
@@ -33,8 +35,14 @@
   var NODE_W = 196;
   var NODE_H = 60;
 
+  var MESES_KEY = 'obracore.flujoMeses';
+  var ESTADOS_MANUALES = ['pausado', 'perdido', 'cancelado'];
+  var ESTADOS_PROYECTO = ['prospecto', 'cotizado', 'ganado', 'en_ejecucion', 'terminado', 'pausado', 'perdido', 'cancelado'];
+
   var arrastreOcurrido = false;
-  var ultimoFiltro = {};
+  // Filtro de la vista general: vive aquí para sobrevivir a los
+  // re-renders (oc:dataChange, cambio de idioma) sin perder lo escrito.
+  var filtro = { texto: '', estado: '' };
 
   function t(clave) {
     return (global.OC_I18N && global.OC_I18N.t) ? global.OC_I18N.t(clave) : clave;
@@ -44,28 +52,37 @@
   }
 
   /* ============================================================
-     NAVEGACIÓN A PANTALLAS DE ETAPA — mismo criterio que
-     buildRegistroNode/onStageSelected en OC_MAIN.html.
+     NAVEGACIÓN A PANTALLAS DE ETAPA — todas las URLs llevan
+     desde=flujo para que la pantalla de la etapa sepa que "Volver"
+     regresa al detalle del proyecto (#/flujo/PRJ-XXXX) y no al calendario.
      ============================================================ */
   function irADetalle(proyectoId) {
     location.hash = '#/flujo/' + proyectoId;
   }
 
+  function urlEtapa(url, proyectoId, registroId) {
+    var q = [];
+    if (proyectoId) { q.push('proyecto=' + encodeURIComponent(proyectoId)); }
+    if (registroId) { q.push('id=' + encodeURIComponent(registroId)); }
+    q.push('desde=flujo');
+    return url + '?' + q.join('&');
+  }
+
   function abrirEtapaSinRegistro(proyectoId, etapaId) {
     var url = URL_POR_ETAPA[etapaId];
     if (url) {
-      window.location.href = url + '?proyecto=' + encodeURIComponent(proyectoId);
+      window.location.href = urlEtapa(url, proyectoId, null);
     }
   }
 
   function abrirRegistro(proyectoId, etapaId, registro) {
     if (registro.tipo === 'solicitud') {
-      window.location.href = 'OC_SOLICITUD.html?id=' + encodeURIComponent(registro.id);
+      window.location.href = urlEtapa('OC_SOLICITUD.html', proyectoId, registro.id);
     } else if (registro.tipo === 'levantamiento') {
-      window.location.href = 'OC_LEVANTAMIENTO.html?id=' + encodeURIComponent(registro.id);
+      window.location.href = urlEtapa('OC_LEVANTAMIENTO.html', proyectoId, registro.id);
     } else if (registro.tipo === 'cotizacion') {
       if (registro.estado === 'borrador') {
-        window.location.href = 'OC_COTIZACION.html?id=' + encodeURIComponent(registro.id);
+        window.location.href = urlEtapa('OC_COTIZACION.html', proyectoId, registro.id);
       } else if (global.OCPdfStore) {
         var cot = global.OCStore.getCotizacion(registro.id);
         if (cot) { global.OCPdfStore.abrirPdf(cot.pdfKey); }
@@ -116,18 +133,94 @@
   }
 
   /* ============================================================
-     FILTRO (mismo criterio que filtrarArbol en OC_MAIN.html,
-     reimplementado aquí porque es una función privada de ese script)
+     FILTRO — texto (proyecto, cliente o id) y estado.
      ============================================================ */
-  function coincideFiltro(proyecto, filtro) {
-    filtro = filtro || {};
-    if (filtro.estado && proyecto.estado !== filtro.estado) { return false; }
-    if (filtro.texto) {
+  function coincideFiltro(proyecto, f) {
+    f = f || {};
+    if (f.estado && proyecto.estado !== f.estado) { return false; }
+    if (f.texto) {
       var clienteNombre = (proyecto.cliente && proyecto.cliente.nombre) || '';
       var hay = (proyecto.nombre + ' ' + proyecto.id + ' ' + clienteNombre).toLowerCase();
-      if (hay.indexOf(filtro.texto) === -1) { return false; }
+      if (hay.indexOf(f.texto) === -1) { return false; }
     }
     return true;
+  }
+
+  /* ============================================================
+     MESES (localStorage) — { 'YYYY-MM': true|false }. Sin entrada, el
+     mes actual está abierto y los demás cerrados.
+     ============================================================ */
+  function cargarMeses() {
+    try {
+      var raw = localStorage.getItem(MESES_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function guardarMes(clave, abierto) {
+    try {
+      var todos = cargarMeses();
+      todos[clave] = !!abierto;
+      localStorage.setItem(MESES_KEY, JSON.stringify(todos));
+    } catch (e) { /* sin localStorage: el estado no sobrevive al reload, no rompe nada */ }
+  }
+
+  function mesAbierto(clave, guardados) {
+    if (Object.prototype.hasOwnProperty.call(guardados, clave)) { return !!guardados[clave]; }
+    return clave === global.OCStore.todayISO().slice(0, 7);
+  }
+
+  function capitalizar(str) {
+    str = str || '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function tituloMes(clave) {
+    var partes = clave.split('-');
+    var meses = t('cal.months');
+    var nombre = Array.isArray(meses) ? meses[parseInt(partes[1], 10) - 1] : partes[1];
+    return capitalizar(nombre) + ' ' + partes[0];
+  }
+
+  /* ============================================================
+     ACCIONES DEL PROYECTO — aviso ⚠ ("todas las cotizaciones quedaron
+     rechazadas") y menú ⋯ (Pausar / Marcar como perdido / Cancelar /
+     Reactivar). Se usan en cada fila de la vista general y en la barra
+     del detalle; las ventanas viven en OC_MAIN.html (window.OCUi).
+     ============================================================ */
+  function buildAccionesProyecto(proyecto) {
+    var wrap = document.createElement('span');
+    wrap.className = 'oc-flujo-acciones-proyecto';
+    var ui = global.OCUi;
+    if (!ui) { return wrap; }
+
+    if (ESTADOS_MANUALES.indexOf(proyecto.estado) === -1
+      && global.OCStore.todasCotizacionesRechazadas(proyecto.id)) {
+      var aviso = document.createElement('button');
+      aviso.type = 'button';
+      aviso.className = 'oc-proyecto-aviso-perdido';
+      aviso.textContent = '⚠';
+      aviso.title = t('proyecto.sugerenciaPerdido.texto');
+      aviso.setAttribute('aria-label', t('proyecto.sugerenciaPerdido.texto'));
+      aviso.addEventListener('click', function (e) {
+        e.stopPropagation();
+        ui.mostrarSugerenciaPerdido(proyecto.id);
+      });
+      wrap.appendChild(aviso);
+    }
+
+    var btnMenu = document.createElement('button');
+    btnMenu.type = 'button';
+    btnMenu.className = 'oc-proyecto-menu-btn';
+    btnMenu.textContent = '⋯';
+    btnMenu.title = t('flujo.proyecto.acciones');
+    btnMenu.setAttribute('aria-label', t('flujo.proyecto.acciones'));
+    btnMenu.addEventListener('click', function (e) {
+      e.stopPropagation();
+      ui.openProyectoMenuDropdown(btnMenu.getBoundingClientRect(), proyecto.id);
+    });
+    wrap.appendChild(btnMenu);
+    return wrap;
   }
 
   /* ============================================================
@@ -206,9 +299,12 @@
     return btn;
   }
 
-  function clickNodoCompacto(proyecto, etapaInfo) {
+  function clickNodoCompacto(proyecto, etapaInfo, anchor) {
     var tieneApantalla = ETAPAS_CON_PANTALLA.indexOf(etapaInfo.etapaId) !== -1;
-    if (tieneApantalla && etapaInfo.registros.length > 0) {
+    if (etapaInfo.etapaId === 'cotizacion' && global.OCUi) {
+      // Cotizar / Ir a cotización / Ver lista: desplegable anclado a la celda.
+      global.OCUi.openCotizacionDropdown(anchor.getBoundingClientRect(), proyecto.id);
+    } else if (tieneApantalla && etapaInfo.registros.length > 0) {
       abrirRegistro(proyecto.id, etapaInfo.etapaId, etapaInfo.registros[0]);
     } else if (tieneApantalla) {
       abrirEtapaSinRegistro(proyecto.id, etapaInfo.etapaId);
@@ -224,7 +320,11 @@
     row.setAttribute('role', 'button');
     row.addEventListener('click', function () { irADetalle(p.id); });
     row.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { irADetalle(p.id); }
+      // Enter/Espacio sobre un botón interno (⋯, ⚠, nodo) lo resuelve el propio botón.
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === row) {
+        e.preventDefault(); // el espacio no debe desplazar la lista
+        irADetalle(p.id);
+      }
     });
 
     var colProyecto = document.createElement('div');
@@ -241,6 +341,7 @@
     colProyecto.appendChild(nombre);
     colProyecto.appendChild(meta);
     colProyecto.appendChild(estadoPill);
+    colProyecto.appendChild(buildAccionesProyecto(p));
     row.appendChild(colProyecto);
 
     var eventos = global.OCStore.getEventosDeProyecto(p.id);
@@ -255,7 +356,7 @@
       var pill = buildNodoCompacto(et, eventosEtapa);
       pill.addEventListener('click', function (e) {
         e.stopPropagation();
-        clickNodoCompacto(p, et);
+        clickNodoCompacto(p, et, pill);
       });
       celda.appendChild(pill);
       row.appendChild(celda);
@@ -264,31 +365,135 @@
     return row;
   }
 
-  function renderOverview(container, filtro) {
+  function buildOverviewToolbar(onFiltro) {
+    var bar = document.createElement('div');
+    bar.className = 'oc-flujo-overview-toolbar';
+
+    var inputTexto = document.createElement('input');
+    inputTexto.type = 'text';
+    inputTexto.className = 'oc-input oc-flujo-filtro-texto';
+    inputTexto.value = filtro.texto;
+    inputTexto.placeholder = t('flujo.filtro.texto');
+    inputTexto.setAttribute('aria-label', t('flujo.filtro.texto'));
+    inputTexto.addEventListener('input', function () {
+      filtro.texto = inputTexto.value.trim().toLowerCase();
+      onFiltro();
+    });
+    bar.appendChild(inputTexto);
+
+    var selectEstado = document.createElement('select');
+    selectEstado.className = 'oc-input oc-flujo-filtro-estado';
+    selectEstado.setAttribute('aria-label', t('flujo.filtro.estadoAria'));
+    var optTodos = document.createElement('option');
+    optTodos.value = '';
+    optTodos.textContent = t('flujo.filtro.estadoTodos');
+    selectEstado.appendChild(optTodos);
+    ESTADOS_PROYECTO.forEach(function (estado) {
+      var opt = document.createElement('option');
+      opt.value = estado;
+      opt.textContent = t('proyecto.estado.' + estado);
+      selectEstado.appendChild(opt);
+    });
+    selectEstado.value = filtro.estado;
+    selectEstado.addEventListener('change', function () {
+      filtro.estado = selectEstado.value;
+      onFiltro();
+    });
+    bar.appendChild(selectEstado);
+
+    var btnNuevo = document.createElement('button');
+    btnNuevo.type = 'button';
+    btnNuevo.className = 'oc-btn oc-btn-primary oc-flujo-btn-nuevo';
+    btnNuevo.textContent = t('flujo.nuevoProyecto');
+    btnNuevo.addEventListener('click', function () {
+      if (global.OCUi) { global.OCUi.openNuevoProyectoModal(null, { desde: 'flujo' }); }
+    });
+    bar.appendChild(btnNuevo);
+
+    return bar;
+  }
+
+  function buildMesGrupo(clave, proyectos, abierto, persistir) {
+    var grupo = document.createElement('section');
+    grupo.className = 'oc-flujo-mes' + (abierto ? ' oc-flujo-mes--abierto' : '');
+
+    var cabecera = document.createElement('button');
+    cabecera.type = 'button';
+    cabecera.className = 'oc-flujo-mes-cabecera';
+    cabecera.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    var caret = document.createElement('span');
+    caret.className = 'oc-flujo-mes-caret';
+    caret.setAttribute('aria-hidden', 'true');
+    caret.textContent = '▸';
+    var titulo = document.createElement('span');
+    titulo.className = 'oc-flujo-mes-titulo';
+    titulo.textContent = tituloMes(clave);
+    var contador = document.createElement('span');
+    contador.className = 'oc-flujo-mes-contador';
+    contador.textContent = '· ' + proyectos.length;
+    cabecera.appendChild(caret);
+    cabecera.appendChild(titulo);
+    cabecera.appendChild(contador);
+    grupo.appendChild(cabecera);
+
+    var filas = document.createElement('div');
+    filas.className = 'oc-flujo-mes-filas';
+    proyectos.forEach(function (p, i) {
+      var row = buildOverviewRow(p);
+      row.style.animationDelay = Math.min(i * 15, 280) + 'ms';
+      filas.appendChild(row);
+    });
+    grupo.appendChild(filas);
+
+    cabecera.addEventListener('click', function () {
+      var ahoraAbierto = !grupo.classList.contains('oc-flujo-mes--abierto');
+      grupo.classList.toggle('oc-flujo-mes--abierto', ahoraAbierto);
+      cabecera.setAttribute('aria-expanded', ahoraAbierto ? 'true' : 'false');
+      // Con búsqueda activa el mes se muestra abierto a la fuerza: no se persiste.
+      if (persistir) { guardarMes(clave, ahoraAbierto); }
+    });
+    return grupo;
+  }
+
+  function renderOverview(container) {
     container.innerHTML = '';
     var wrap = document.createElement('div');
     wrap.className = 'oc-flujo-overview';
 
-    var proyectos = global.OCStore.getProyectos().filter(function (p) { return coincideFiltro(p, filtro); });
-    proyectos.sort(function (a, b) { return a.fechaAlta < b.fechaAlta ? 1 : (a.fechaAlta > b.fechaAlta ? -1 : 0); });
-
-    wrap.appendChild(buildOverviewHead());
-
     var body = document.createElement('div');
     body.className = 'oc-flujo-overview-body';
-    if (proyectos.length === 0) {
-      var vacio = document.createElement('div');
-      vacio.className = 'oc-flujo-vacio';
-      vacio.textContent = t('sidebar.sinResultados');
-      body.appendChild(vacio);
-    } else {
-      proyectos.forEach(function (p, i) {
-        var row = buildOverviewRow(p);
-        row.style.animationDelay = Math.min(i * 15, 280) + 'ms';
-        body.appendChild(row);
+
+    // Solo se redibuja el cuerpo al filtrar: así el input no pierde el foco.
+    function renderCuerpo() {
+      body.innerHTML = '';
+      var proyectos = global.OCStore.getProyectos().filter(function (p) { return coincideFiltro(p, filtro); });
+      if (proyectos.length === 0) {
+        var vacio = document.createElement('div');
+        vacio.className = 'oc-flujo-vacio';
+        vacio.textContent = t('flujo.sinResultados');
+        body.appendChild(vacio);
+        return;
+      }
+      var porMes = {};
+      proyectos.forEach(function (p) {
+        var clave = (p.fechaAlta || '').slice(0, 7);
+        (porMes[clave] = porMes[clave] || []).push(p);
+      });
+      var guardados = cargarMeses();
+      var forzarAbierto = !!filtro.texto;
+      Object.keys(porMes).sort().reverse().forEach(function (clave) {
+        porMes[clave].sort(function (a, b) {
+          if (a.fechaAlta !== b.fechaAlta) { return a.fechaAlta < b.fechaAlta ? 1 : -1; }
+          return (a.creadoEn || '') < (b.creadoEn || '') ? 1 : -1;
+        });
+        body.appendChild(buildMesGrupo(clave, porMes[clave], forzarAbierto || mesAbierto(clave, guardados), !forzarAbierto));
       });
     }
+
+    wrap.appendChild(buildOverviewToolbar(renderCuerpo));
+    wrap.appendChild(buildOverviewHead());
     wrap.appendChild(body);
+    renderCuerpo();
     container.appendChild(wrap);
   }
 
@@ -414,13 +619,18 @@
     btn.style.translate = pos.x + 'px ' + pos.y + 'px';
   }
 
-  function abrirNodo(n, proyectoId) {
+  function abrirNodo(n, proyectoId, anchor) {
     if (!n.navegable) { return; }
     if (n.tipo === 'registro') {
       abrirRegistro(proyectoId, n.etapaId, n.registro);
       return;
     }
     if (n.tipo === 'tronco') {
+      if (n.etapaId === 'cotizacion' && global.OCUi) {
+        // Cotizar / Ir a cotización / Ver lista: desplegable anclado al nodo.
+        global.OCUi.openCotizacionDropdown(anchor.getBoundingClientRect(), proyectoId);
+        return;
+      }
       var etapas = global.OCStore.getEtapasDeProyecto(proyectoId);
       var et = etapas.filter(function (e) { return e.etapaId === n.etapaId; })[0];
       if (et && et.registros.length > 0) {
@@ -461,7 +671,7 @@
     }
     btn.addEventListener('click', function () {
       if (arrastreOcurrido) { return; }
-      abrirNodo(n, proyectoId);
+      abrirNodo(n, proyectoId, btn);
     });
 
     return btn;
@@ -662,7 +872,7 @@
     });
     toolbar.querySelector('[data-accion=restablecer]').addEventListener('click', function () {
       borrarPosiciones(proyectoId);
-      render(container, { vista: 'flujo', proyectoId: proyectoId }, ultimoFiltro);
+      render(container, { vista: 'flujo', proyectoId: proyectoId });
     });
   }
 
@@ -762,6 +972,7 @@
     titulo.className = 'oc-flujo-toolbar-titulo';
     titulo.textContent = proyecto.nombre + ' · ' + proyecto.id;
     bar.appendChild(titulo);
+    bar.appendChild(buildAccionesProyecto(proyecto));
 
     var controles = document.createElement('div');
     controles.className = 'oc-flujo-toolbar-controles';
@@ -795,10 +1006,6 @@
       vacio.textContent = t('flujo.detalle.noEncontrado');
       container.appendChild(vacio);
       return;
-    }
-
-    if (typeof global.selectProjectInTree === 'function') {
-      global.selectProjectInTree(proyectoId, { scroll: true });
     }
 
     var wrap = document.createElement('div');
@@ -849,12 +1056,11 @@
   /* ============================================================
      API PÚBLICA
      ============================================================ */
-  function render(container, ruta, filtro) {
-    ultimoFiltro = filtro || {};
+  function render(container, ruta) {
     if (ruta && ruta.proyectoId) {
       renderDetail(container, ruta.proyectoId);
     } else {
-      renderOverview(container, ultimoFiltro);
+      renderOverview(container);
     }
   }
 

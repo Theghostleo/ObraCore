@@ -23,7 +23,6 @@
      OCStore.getProyecto(id)                       -> proyecto | null
      OCStore.getProyectos()                        -> [proyecto]
      OCStore.getArbolProyectos()                   -> [{clienteId, clienteNombre, proyectos:[...]}] (agrupado por cliente; sin uso en la UI actual, se conserva por si hace falta)
-     OCStore.getArbolPorMes()                      -> [{anio, mes, clave:'YYYY-MM', proyectos:[...]}] (agrupado por mes de fechaAlta; el que usa el explorador)
      OCStore.getEtapasDeProyecto(proyectoId)        -> [{etapaId, estado, registros:[...]}]
      OCStore.getSolicitudPorProyecto(proyectoId)    -> solicitud | null
      OCStore.getCotizacionesPorProyecto(proyectoId) -> [cotización]
@@ -45,6 +44,12 @@
                                                  cuya fecha ya pasó — único disparador del rojo)
      OCStore.TIPOS_EVENTO                    -> mapa { tipo: {clase: 'operativa'|'hito'} }
      OCStore.claseDeEvento(tipo)             -> 'operativa' | 'hito'
+
+   Uso — recordatorios (tareas del menú del día; sin proyecto, no afectan getEstadoDia):
+     OCStore.crearRecordatorio({fecha, hora?, titulo, nota?}) -> recordatorio (id 'REC-0001', hecho:false)
+     OCStore.actualizarRecordatorio(id, cambios)  -> recordatorio | null
+     OCStore.eliminarRecordatorio(id)             -> bool
+     OCStore.getRecordatoriosPorFecha('YYYY-MM-DD') -> [recordatorio] (pendientes primero, luego por hora)
 
    Uso — estado de proyecto (automático):
      OCStore.recalcularEstadoProyecto(id)    -> recalcula salvo que el estado sea manual
@@ -86,7 +91,7 @@
      OCStore.getConfig()                             -> datos de la empresa emisora
 
    Cada persist() dispara un evento 'oc:dataChange' en document (envuelto
-   en try/catch) para que las pantallas re-rendericen árbol/calendario sin
+   en try/catch) para que las pantallas re-rendericen Flujo/calendario sin
    tener que acordarse de hacerlo a mano en cada mutación.
    ============================================================ */
 (function (global) {
@@ -760,7 +765,9 @@
       cotizaciones: cotizaciones,
       proyectos: proyectos,
       eventos: eventos,
-      levantamientos: levantamientos
+      levantamientos: levantamientos,
+      recordatorios: {},
+      nextRecordatorioId: 1
     };
   }
 
@@ -950,6 +957,9 @@
     if (!state.nextEventoId) { state.nextEventoId = 1; changed = true; }
     if (!state.levantamientos) { state.levantamientos = {}; changed = true; }
     if (!state.nextLevantamientoId) { state.nextLevantamientoId = 1; changed = true; }
+    // Tareas del calendario (recordatorios): entidad aparte, sin migración de esquema.
+    if (!state.recordatorios) { state.recordatorios = {}; changed = true; }
+    if (!state.nextRecordatorioId) { state.nextRecordatorioId = 1; changed = true; }
     if (!state.schemaVersion || state.schemaVersion < CURRENT_SCHEMA_VERSION) {
       if (!state.schemaVersion || state.schemaVersion < 2) {
         state = migrarV1aV2(state);
@@ -1074,49 +1084,6 @@
       });
     });
     return orden.map(function (cid) { return porCliente[cid]; });
-  }
-
-  // Agrupa por mes de fechaAlta ('YYYY-MM'), meses del más reciente al
-  // más antiguo y, dentro de cada mes, proyectos del más reciente al más
-  // antiguo (por fechaAlta; empata por creadoEn). Es lo que usa el
-  // explorador de OC_MAIN.html; getArbolProyectos() (por cliente) se
-  // conserva arriba por si algo más lo necesita.
-  function getArbolPorMes() {
-    var proyectos = getProyectos();
-    var porMes = {};
-    var claves = [];
-    proyectos.forEach(function (p) {
-      var fechaAlta = p.fechaAlta || todayISO();
-      var clave = fechaAlta.slice(0, 7);
-      if (!porMes[clave]) {
-        var partes = clave.split('-');
-        porMes[clave] = {
-          anio: parseInt(partes[0], 10),
-          mes: parseInt(partes[1], 10) - 1,
-          clave: clave,
-          proyectos: []
-        };
-        claves.push(clave);
-      }
-      porMes[clave].proyectos.push({
-        proyectoId: p.id,
-        nombre: p.nombre,
-        cliente: p.cliente,
-        estado: p.estado,
-        etapas: p.etapas,
-        fechaAlta: fechaAlta
-      });
-    });
-    claves.sort(function (a, b) { return a < b ? 1 : (a > b ? -1 : 0); });
-    claves.forEach(function (clave) {
-      porMes[clave].proyectos.sort(function (a, b) {
-        if (a.fechaAlta !== b.fechaAlta) {
-          return a.fechaAlta < b.fechaAlta ? 1 : -1;
-        }
-        return 0;
-      });
-    });
-    return claves.map(function (clave) { return porMes[clave]; });
   }
 
   function getSolicitudPorProyecto(proyectoId) {
@@ -1294,6 +1261,80 @@
     recalcularEstadoProyecto(updated.proyectoId);
     persist();
     return updated;
+  }
+
+  /* ============================================================
+     RECORDATORIOS ("Tareas" del menú del día) — notas simples ligadas
+     solo a una fecha. NO tienen proyecto, NO cuentan en getEstadoDia y
+     NO recalculan estados de proyecto: por eso no pasan por eventos.
+     ============================================================ */
+  function crearRecordatorio(datos) {
+    var s = ensureState();
+    var id = 'REC-' + pad4(s.nextRecordatorioId++);
+    var ts = nowISO();
+    var rec = {
+      id: id,
+      fecha: datos.fecha,
+      hora: datos.hora || null,
+      titulo: datos.titulo || '',
+      nota: datos.nota || '',
+      hecho: !!datos.hecho,
+      creadoEn: ts,
+      actualizadoEn: ts
+    };
+    s.recordatorios[id] = rec;
+    persist();
+    return rec;
+  }
+
+  function actualizarRecordatorio(id, cambios) {
+    var s = ensureState();
+    var existing = s.recordatorios[id];
+    if (!existing) {
+      return null;
+    }
+    var updated = {
+      id: existing.id,
+      fecha: cambios.fecha !== undefined ? cambios.fecha : existing.fecha,
+      hora: cambios.hora !== undefined ? (cambios.hora || null) : existing.hora,
+      titulo: cambios.titulo !== undefined ? cambios.titulo : existing.titulo,
+      nota: cambios.nota !== undefined ? cambios.nota : existing.nota,
+      hecho: cambios.hecho !== undefined ? !!cambios.hecho : existing.hecho,
+      creadoEn: existing.creadoEn,
+      actualizadoEn: nowISO()
+    };
+    s.recordatorios[id] = updated;
+    persist();
+    return updated;
+  }
+
+  function eliminarRecordatorio(id) {
+    var s = ensureState();
+    if (!s.recordatorios[id]) {
+      return false;
+    }
+    delete s.recordatorios[id];
+    persist();
+    return true;
+  }
+
+  // Pendientes primero; dentro de cada grupo por hora (sin hora al final), luego por creación.
+  function getRecordatoriosPorFecha(fechaISO) {
+    var s = ensureState();
+    var out = [];
+    Object.keys(s.recordatorios).forEach(function (id) {
+      if (s.recordatorios[id].fecha === fechaISO) {
+        out.push(s.recordatorios[id]);
+      }
+    });
+    out.sort(function (a, b) {
+      if (a.hecho !== b.hecho) { return a.hecho ? 1 : -1; }
+      var ha = a.hora || '99:99';
+      var hb = b.hora || '99:99';
+      if (ha !== hb) { return ha < hb ? -1 : 1; }
+      return a.id < b.id ? -1 : 1;
+    });
+    return out;
   }
 
   function getEvento(id) {
@@ -1982,7 +2023,6 @@
     getProyecto: getProyecto,
     getProyectos: getProyectos,
     getArbolProyectos: getArbolProyectos,
-    getArbolPorMes: getArbolPorMes,
     getEtapasDeProyecto: getEtapasDeProyecto,
     getSolicitudPorProyecto: getSolicitudPorProyecto,
     getCotizacionesPorProyecto: getCotizacionesPorProyecto,
@@ -1999,6 +2039,11 @@
     getEventosDelMes: getEventosDelMes,
     diaDeActividad: diaDeActividad,
     eventoVencido: eventoVencido,
+    // Recordatorios (tareas del día)
+    crearRecordatorio: crearRecordatorio,
+    actualizarRecordatorio: actualizarRecordatorio,
+    eliminarRecordatorio: eliminarRecordatorio,
+    getRecordatoriosPorFecha: getRecordatoriosPorFecha,
     // Solicitudes
     crearSolicitud: crearSolicitud,
     actualizarSolicitud: actualizarSolicitud,

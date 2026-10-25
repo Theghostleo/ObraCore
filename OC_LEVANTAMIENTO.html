@@ -564,7 +564,7 @@ textarea.oc-input { resize: vertical; min-height: 70px; font-family: var(--oc-fo
 <script src="forms.js"></script>
 <script src="pdfStore.js"></script>
 <script src="pdf.js"></script>
-<script src="i18n.js"></script>
+<script src="i18n.js?v=3"></script>
 <script>
 (function () {
   'use strict';
@@ -581,6 +581,28 @@ textarea.oc-input { resize: vertical; min-height: 70px; font-family: var(--oc-fo
       params[key] = value;
     });
     return params;
+  }
+
+  // Origen: con ?desde=flujo, "Volver" regresa al detalle del proyecto en
+  // Flujo (#/flujo/PRJ-XXXX); si no, al calendario (OC_MAIN.html).
+  var desdeFlujo = (getQueryParams().desde === 'flujo');
+  function sufijoDesde() { return desdeFlujo ? '&desde=flujo' : ''; }
+  function volverUrl() {
+    var id = currentProyectoId;
+    return (desdeFlujo && id) ? 'OC_MAIN.html#/flujo/' + encodeURIComponent(id) : 'OC_MAIN.html';
+  }
+  function aplicarVolver() {
+    var url = volverUrl();
+    var aProyecto = url !== 'OC_MAIN.html';
+    var key = aProyecto ? 'volver.proyecto' : 'cotizacion.accion.volver';
+    var link = document.getElementById('oc-back-link');
+    if (link) { link.setAttribute('href', url); }
+    var label = document.querySelector('#oc-back-link [data-i18n]');
+    if (label) {
+      label.setAttribute('data-i18n', key);
+      var txt = window.OC_I18N ? OC_I18N.t(key) : key;
+      if (txt !== key) { label.textContent = txt; }
+    }
   }
 
   // Id del levantamiento que se está editando (null = se está creando
@@ -874,10 +896,10 @@ textarea.oc-input { resize: vertical; min-height: 70px; font-family: var(--oc-fo
   });
 
   byId('oc-btn-cancelar').addEventListener('click', function () {
-    window.location.href = 'OC_MAIN.html';
+    window.location.href = volverUrl();
   });
 
-  // El árbol/calendario de OC_MAIN.html difiere el primer render real
+  // Flujo/calendario de OC_MAIN.html difiere el primer render real
   // hasta que el diccionario está listo (evento 'oc:langchange'); esta
   // pantalla hace lo mismo, porque OCForms.render usa OC_I18N.t() para
   // varias etiquetas (agregar fila, usar mi ubicación, etc.) y no solo
@@ -885,8 +907,10 @@ textarea.oc-input { resize: vertical; min-height: 70px; font-family: var(--oc-fo
   document.addEventListener('oc:langchange', function () {
     if (!plantillaCompleta) {
       initFromQuery();
+      aplicarVolver();
       return;
     }
+    aplicarVolver();
     var datosActuales = OCForms.collect(byId('oc-form-root'));
     cargarPlantillaYFormulario(datosActuales);
     actualizarSubtitulo();

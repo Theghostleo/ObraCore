@@ -41,7 +41,6 @@
   --oc-radius: 3px;            /* botones, inputs, filas */
   --oc-radius-panel: 4px;      /* paneles, tarjetas, modales */
   --oc-navbar-h: 61px;
-  --oc-sidebar-w: 280px;
 
   --oc-font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --oc-font-mono: 'IBM Plex Mono', Consolas, monospace;
@@ -91,15 +90,15 @@ html, body {
 }
 
 /* ============================================================
-   LAYOUT RAÍZ: 3 zonas fijas, sin scroll de body
+   LAYOUT RAÍZ: navbar + panel central, sin scroll de body
    ============================================================ */
 #oc-app {
   display: grid;
-  grid-template-columns: var(--oc-sidebar-w) 1fr;
+  grid-template-columns: 1fr;
   grid-template-rows: var(--oc-navbar-h) 1fr;
   grid-template-areas:
-    "navbar navbar"
-    "sidebar main";
+    "navbar"
+    "main";
   height: 100vh;
   width: 100vw;
 }
@@ -234,140 +233,6 @@ html, body {
   box-shadow: 0 0 8px var(--oc-accent-cyan-glow);
 }
 
-/* ============================================================
-   2. SIDEBAR — árbol tipo explorador de archivos
-   ============================================================ */
-#oc-sidebar {
-  grid-area: sidebar;
-  background: var(--oc-surface);
-  border-right: 1px solid var(--oc-border);
-  overflow-y: auto;
-  padding: 12px 8px;
-}
-
-#oc-sidebar-title {
-  font-family: var(--oc-font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--oc-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 4px 8px 10px 8px;
-}
-
-.oc-tree, .oc-tree ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.oc-tree ul {
-  /* indentación por nivel de anidamiento */
-  padding-left: 18px;
-}
-
-.oc-tree-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  border-radius: var(--oc-radius);
-  cursor: pointer;
-  color: var(--oc-text);
-  font-size: 13px;
-  white-space: nowrap;
-  user-select: none;
-  border: 1px solid transparent;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-.oc-tree-row:hover {
-  background: var(--oc-accent-gold-glow);
-  border-color: var(--oc-accent-gold-border);
-  color: var(--oc-accent-gold);
-}
-.oc-tree-row.oc-selected {
-  background: var(--oc-accent-gold-glow);
-  border-color: var(--oc-accent-gold-border);
-  color: var(--oc-accent-gold);
-}
-
-/* Flecha/triángulo que rota al expandir. Invisible (pero reserva espacio) en las hojas. */
-.oc-caret {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  color: var(--oc-text-muted);
-  transition: transform 0.15s ease;
-}
-.oc-caret svg {
-  width: 10px;
-  height: 10px;
-  fill: currentColor;
-}
-.oc-tree-node.oc-expanded > .oc-tree-row > .oc-caret {
-  transform: rotate(90deg);
-}
-.oc-caret.oc-caret-empty {
-  visibility: hidden;
-}
-
-.oc-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  color: var(--oc-text-muted);
-}
-.oc-icon svg {
-  width: 14px;
-  height: 14px;
-  fill: currentColor; /* sin esto, los paths sin fill propio caen al negro por default del SVG */
-}
-.oc-tree-row:hover .oc-icon,
-.oc-tree-row.oc-selected .oc-icon {
-  color: var(--oc-accent-gold);
-}
-
-.oc-label {
-  flex: 1 1 auto;
-  min-width: 0; /* imprescindible en flex para que overflow/ellipsis corten en vez de desbordar */
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Hijos colapsados por defecto: se ocultan vía JS con esta clase */
-.oc-children-hidden {
-  display: none;
-}
-
-/* ---- Toolbar del explorador: "+ Nuevo proyecto" y filtro ---- */
-#oc-sidebar-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 4px 12px 4px;
-}
-#oc-sidebar-toolbar .oc-btn {
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 13px;
-}
-#oc-sidebar-toolbar .oc-input {
-  padding: 7px 10px;
-  font-size: 12.5px;
-}
-
-.oc-tree-empty {
-  padding: 10px 8px;
-  font-size: 12.5px;
-  color: var(--oc-text-muted);
-  font-style: italic;
-}
-
 /* ---- Pastilla de estado de proyecto (prospecto/cotizado/ganado/
    en_ejecucion/terminado/pausado/perdido/cancelado) ---- */
 .oc-proyecto-estado {
@@ -419,18 +284,22 @@ html, body {
 .oc-proyecto-aviso-perdido {
   flex-shrink: 0;
   margin-left: 2px;
+  padding: 0;
+  background: transparent;
+  border: none;
   color: var(--oc-text-muted);
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  transition: color var(--oc-dur-fast) ease;
 }
 .oc-proyecto-aviso-perdido:hover {
   color: var(--oc-accent-gold);
 }
 
 /* ---- Botón "⋯" del menú manual de proyecto (Pausar/Perdido/Cancelar/
-   Reactivar), junto a la pastilla de estado ---- */
-.oc-tree-menu-btn {
+   Reactivar), en cada fila de Flujo y en la barra del detalle ---- */
+.oc-proyecto-menu-btn {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -447,88 +316,14 @@ html, body {
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
-.oc-tree-menu-btn:hover {
+.oc-proyecto-menu-btn:hover {
   color: var(--oc-accent-cyan);
   border-color: var(--oc-accent-cyan-border);
   background: var(--oc-accent-cyan-glow);
 }
 
-/* ---- Nodo de proyecto: nombre arriba, "Cliente · PRJ-XXXX" abajo ---- */
-.oc-tree-proyecto-text {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
-  line-height: 1.3;
-}
-.oc-tree-proyecto-sub {
-  font-family: var(--oc-font-mono);
-  font-size: 10.5px;
-  color: var(--oc-text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.oc-tree-row:hover .oc-tree-proyecto-sub,
-.oc-tree-row.oc-selected .oc-tree-proyecto-sub {
-  color: inherit;
-  opacity: 0.75;
-}
-
-/* ---- Carpeta de mes (agrupa proyectos por fecha de alta) ---- */
-.oc-mes-contador {
-  flex-shrink: 0;
-  font-family: var(--oc-font-mono);
-  font-size: 10.5px;
-  color: var(--oc-text-muted);
-}
-.oc-tree-row:hover .oc-mes-contador,
-.oc-tree-row.oc-selected .oc-mes-contador {
-  color: inherit;
-  opacity: 0.8;
-}
-
-/* ---- Fila de etapa dentro de un proyecto: ícono de estado + label ---- */
-.oc-etapa-icon {
-  font-size: 11px;
-  line-height: 1;
-}
-/* Misma especificidad que ".oc-tree-row:hover .oc-icon"/".oc-selected .oc-icon"
-   (3 selectores de clase) para que el rojo de "bloqueada" nunca se
-   pierda contra el dorado de hover/selección; gana por venir después. */
-.oc-tree-row .oc-icon.oc-etapa-icon--bloqueada {
-  color: var(--oc-alert);
-}
-.oc-tree-etapa--disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-.oc-tree-etapa--disabled:hover {
-  background: transparent;
-  border-color: transparent;
-  color: var(--oc-text);
-}
-.oc-etapa-pronto {
-  flex-shrink: 0;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--oc-border);
-  color: var(--oc-text-muted);
-  font-family: var(--oc-font-mono);
-  font-size: 8.5px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-}
-
-/* ---- Fila de registro (solicitud/cotización) dentro de una etapa ---- */
-.oc-tree-registro .oc-label {
-  font-family: var(--oc-font-mono);
-  font-size: 12px;
-}
-
 /* ============================================================
-   3. PANEL CENTRAL — calendario
+   2. PANEL CENTRAL — calendario (agenda) y flujo de trabajo
    ============================================================ */
 #oc-main {
   grid-area: main;
@@ -677,71 +472,6 @@ html, body {
 }
 
 /* ============================================================
-   MENÚ RADIAL ("array polar") — 7 etapas, se abre al hacer
-   hover sobre una celda de día. Contenedor y pastillas viven en
-   position:fixed (coordenadas de viewport) para escapar del
-   overflow:hidden/auto del panel y la cuadrícula del calendario.
-   ============================================================ */
-.oc-fan-menu {
-  position: fixed;
-  z-index: 500;
-}
-
-.oc-fan-line {
-  position: fixed;
-  height: 1.5px;
-  background: var(--oc-accent-cyan);
-  transform-origin: left center;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 500;
-  transition: opacity 0.2s ease;
-}
-.oc-fan-line.oc-fan-in {
-  opacity: 0.4;
-}
-
-.oc-fan-pill {
-  position: fixed;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  background: var(--oc-surface);
-  border: 1px solid var(--oc-border);
-  border-radius: 999px;
-  color: var(--oc-text);
-  font-family: var(--oc-font-ui);
-  font-size: 12px;
-  white-space: nowrap;
-  cursor: pointer;
-  z-index: 501;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  opacity: 0;
-  transform: translate(var(--fan-dx, 0), var(--fan-dy, 0)) scale(0.75);
-  transition: opacity 0.2s ease, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
-    border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
-}
-.oc-fan-pill.oc-fan-in {
-  opacity: 1;
-  transform: translate(0, 0) scale(1);
-}
-.oc-fan-pill:hover {
-  color: var(--oc-accent-cyan);
-  border-color: var(--oc-accent-cyan);
-  box-shadow: 0 0 10px var(--oc-accent-cyan-glow), 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-.oc-fan-pill--disabled {
-  cursor: default;
-  opacity: 0.45;
-}
-.oc-fan-pill--disabled:hover {
-  color: var(--oc-text);
-  border-color: var(--oc-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
-/* ============================================================
    ETIQUETA DE ESTADO DEL DÍA — reservado / ocupado, según
    OCStore.getEstadoDia() (actividades operativas tentativas vs.
    confirmadas/en ejecución). "Libre" no se pinta: un día vacío ya
@@ -870,10 +600,10 @@ html, body {
 }
 
 /* ============================================================
-   DESPLEGABLE DE "COTIZACIÓN" — anclado a la pastilla del abanico,
-   con hasta 3 opciones (Cotizar / Ir a cotización / Ver lista). El
-   mismo componente (con clase adicional .oc-day-empty-menu) se
-   reutiliza para el menú de "día vacío" del calendario.
+   DESPLEGABLE DE "COTIZACIÓN" — anclado al nodo/celda Cotización
+   de Flujo, con hasta 3 opciones (Cotizar / Ir a cotización / Ver
+   lista). El mismo componente (con clase adicional .oc-day-menu) se
+   reutiliza para el menú del día del calendario.
    ============================================================ */
 .oc-cotizacion-dropdown {
   position: fixed;
@@ -953,6 +683,230 @@ html, body {
 .oc-dropdown-subitem:hover {
   background: var(--oc-accent-gold-glow);
   color: var(--oc-accent-gold);
+}
+
+/* ============================================================
+   TAREAS (recordatorios) — sección del menú del día, chips en la
+   celda y modal. Son notas simples: no ocupan el calendario ni
+   cambian el estado del día. Verde --oc-ok = hecha; rojo solo en el
+   paso de confirmación del borrado.
+   ============================================================ */
+.oc-day-menu {
+  min-width: 260px;
+}
+.oc-dropdown-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.oc-dropdown-btn:disabled:hover {
+  background: transparent;
+  color: var(--oc-text);
+}
+
+.oc-tarea-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 4px 1px 6px;
+  border-radius: 6px;
+}
+.oc-tarea-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.oc-tarea-check {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--oc-text-muted);
+  border-radius: var(--oc-radius);
+  cursor: pointer;
+  transition: border-color var(--oc-dur-fast) ease, background-color var(--oc-dur-fast) ease, box-shadow var(--oc-dur-fast) ease;
+}
+.oc-tarea-check:hover {
+  border-color: var(--oc-accent-cyan);
+  box-shadow: 0 0 8px var(--oc-accent-cyan-glow);
+}
+.oc-tarea-row--hecho .oc-tarea-check {
+  background: var(--oc-ok-glow);
+  border-color: var(--oc-ok);
+}
+.oc-tarea-row--hecho .oc-tarea-check::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border: solid var(--oc-ok);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.oc-tarea-texto {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 7px 4px;
+  color: var(--oc-text);
+  font-family: var(--oc-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color var(--oc-dur-fast) ease;
+}
+.oc-tarea-texto:hover {
+  color: var(--oc-accent-cyan);
+}
+.oc-tarea-row--hecho .oc-tarea-texto {
+  color: var(--oc-text-muted);
+  text-decoration: line-through;
+}
+.oc-tarea-hora {
+  margin-right: 6px;
+  font-family: var(--oc-font-mono);
+  font-size: 11px;
+  color: var(--oc-text-muted);
+}
+.oc-tarea-del {
+  flex: none;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--oc-radius);
+  padding: 2px 6px;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color var(--oc-dur-fast) ease, background-color var(--oc-dur-fast) ease, border-color var(--oc-dur-fast) ease;
+}
+.oc-tarea-del:hover {
+  color: var(--oc-text);
+}
+.oc-tarea-del--armado,
+.oc-tarea-del--armado:hover {
+  color: var(--oc-alert);
+  background: var(--oc-alert-glow);
+  border-color: var(--oc-alert-border);
+}
+
+.oc-day-tareas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  min-width: 0;
+}
+.oc-tarea-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+  color: var(--oc-text-muted);
+  font-family: var(--oc-font-mono);
+  font-size: 10px;
+  line-height: 1.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color var(--oc-dur-fast) ease;
+}
+.oc-tarea-chip::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border: 1px solid var(--oc-text-muted);
+  border-radius: 2px;
+  vertical-align: baseline;
+  transition: border-color var(--oc-dur-fast) ease, background-color var(--oc-dur-fast) ease;
+}
+.oc-tarea-chip:hover {
+  color: var(--oc-text);
+}
+.oc-tarea-chip--hecho {
+  text-decoration: line-through;
+}
+.oc-tarea-chip--hecho::before {
+  border-color: var(--oc-ok);
+  background: var(--oc-ok);
+}
+.oc-tarea-chip--mas::before {
+  display: none;
+}
+
+.oc-modal-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--oc-text-muted);
+}
+
+/* ============================================================
+   LEYENDA del calendario ("?") — popover con muestras reales de
+   las mismas clases que usa la agenda. Solo informa: sin acciones.
+   ============================================================ */
+#oc-cal-leyenda-btn {
+  font-family: var(--oc-font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+.oc-leyenda {
+  min-width: 340px;
+  max-width: 400px;
+  padding: 8px 12px 12px;
+}
+.oc-leyenda .oc-dropdown-submenu-title {
+  padding-left: 0;
+}
+.oc-leyenda .oc-dropdown-submenu-title:not(:first-child) {
+  margin-top: 8px;
+}
+.oc-leyenda-fila {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 0;
+}
+.oc-leyenda-muestra {
+  display: flex;
+  min-width: 0;
+}
+.oc-leyenda .oc-evt-chip,
+.oc-leyenda .oc-tarea-chip {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  cursor: default;
+}
+.oc-leyenda .oc-evt-chip:hover {
+  box-shadow: none;
+}
+.oc-leyenda .oc-day-status {
+  margin-top: 0;
+}
+.oc-leyenda-texto {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--oc-text-muted);
+}
+.oc-leyenda-nota {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--oc-border);
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--oc-text-muted);
 }
 
 /* ============================================================
@@ -1123,7 +1077,7 @@ html, body {
   justify-self: end;
 }
 
-/* ---- Pastilla de estado de cotización (lista de cotizaciones, árbol):
+/* ---- Pastilla de estado de cotización (lista de cotizaciones):
    aceptada = ámbar; rechazada/sustituida = neutro atenuado (nunca rojo,
    no es un error); borrador/emitida = neutro normal. ---- */
 .oc-cot-estado {
@@ -1310,6 +1264,7 @@ html, body {
   font-size: 13px;
   font-weight: 600;
   color: var(--oc-text);
+  padding-right: 36px; /* reserva el hueco de ⚠ / ⋯ (esquina de la columna) */
 }
 .oc-flujo-overview-meta {
   font-family: var(--oc-font-mono);
@@ -1372,6 +1327,83 @@ html, body {
   padding: 60px 20px;
   text-align: center;
   color: var(--oc-text-muted);
+}
+
+/* ---- Vista general de Flujo: barra de búsqueda, filtro y "+ Nuevo proyecto" ---- */
+.oc-flujo-overview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--oc-border);
+}
+.oc-flujo-filtro-texto {
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+.oc-flujo-filtro-estado {
+  flex: 0 0 200px;
+}
+.oc-flujo-btn-nuevo {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ---- Proyectos agrupados por mes de alta (más reciente primero) ---- */
+.oc-flujo-mes-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-bottom: 1px solid var(--oc-border);
+  color: var(--oc-text);
+  font-family: var(--oc-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--oc-dur-fast) ease, color var(--oc-dur-fast) ease;
+}
+.oc-flujo-mes-cabecera:hover {
+  background: var(--oc-accent-cyan-glow);
+  color: var(--oc-accent-cyan);
+}
+.oc-flujo-mes-caret {
+  display: inline-block;
+  width: 10px;
+  color: var(--oc-text-muted);
+  transition: transform var(--oc-dur-fast) ease;
+}
+.oc-flujo-mes--abierto .oc-flujo-mes-caret {
+  transform: rotate(90deg);
+}
+.oc-flujo-mes-contador {
+  color: var(--oc-text-muted);
+  font-weight: 500;
+}
+.oc-flujo-mes-filas {
+  display: none;
+}
+.oc-flujo-mes--abierto .oc-flujo-mes-filas {
+  display: block;
+}
+
+/* ---- ⚠ y ⋯ del proyecto: esquina de la columna "Proyecto" y barra del detalle ---- */
+.oc-flujo-acciones-proyecto {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.oc-flujo-overview-row .oc-flujo-overview-col-proyecto {
+  position: relative;
+}
+.oc-flujo-overview-row .oc-flujo-acciones-proyecto {
+  position: absolute;
+  top: -2px;
+  right: 6px;
 }
 
 /* ---- Detalle: lienzo ---- */
@@ -1700,6 +1732,9 @@ select.oc-input:focus-visible {
 }
 .oc-modal-overlay {
   animation: oc-fade-in var(--oc-dur-med) ease both;
+}
+.oc-cotizacion-dropdown.oc-sin-anim {
+  animation: none;
 }
 
 /* ============================================================

@@ -35,12 +35,12 @@ una propuesta futura cambia la dirección, actualiza esta skill en el mismo camb
 | Token | Valor | Uso |
 |---|---|---|
 | `--oc-bg` | `#0c1016` | Fondo de página (con rejilla de plano) |
-| `--oc-surface` | `#141b24` | Paneles, navbar, sidebar, tarjetas, pastillas, modales |
+| `--oc-surface` | `#141b24` | Paneles, navbar, tarjetas, pastillas, menús, modales |
 | `--oc-border` | `#24313f` | Bordes, separadores, scrollbar |
 | `--oc-text` | `#e8edf3` | Texto principal |
 | `--oc-text-muted` | `#7d8a99` | Texto secundario, labels, iconos en reposo |
-| `--oc-accent-cyan` | `#4dd8ff` | **Interacción**: hover, foco, activo, enlaces, líneas del menú radial |
-| `--oc-accent-gold` | `#f2b84b` | **Hoy / en curso / selección / alta actividad**: día actual, logo, ítem seleccionado del árbol, día reservado/ocupado, actividad confirmada o en ejecución, proyecto ganado/en ejecución |
+| `--oc-accent-cyan` | `#4dd8ff` | **Interacción**: hover, foco, activo, enlaces |
+| `--oc-accent-gold` | `#f2b84b` | **Hoy / en curso / selección / alta actividad**: día actual, logo, fila/nodo seleccionado, día reservado/ocupado, actividad confirmada o en ejecución, proyecto ganado/en ejecución |
 | `--oc-alert` | `#ff6b5b` | **Problema real, nunca "ocupado"**: actividad confirmada con fecha vencida, etapa bloqueada, error de validación |
 | `--oc-ok` | `#3ddc84` | **Completado / resultado positivo**: proyecto terminado, actividad terminada |
 
@@ -92,7 +92,7 @@ Se cargan solo de Google Fonts (Space Grotesk 400/500/600/700, IBM Plex Mono 400
 No agregues otras familias.
 
 Escala en uso (px): 10 (pastillas de estado) · 11 (encabezados mono en mayúsculas,
-`letter-spacing: 1px`) · 12–13 (cuerpo denso, árbol, menús) · 14 (botones) · 15 (navbar) ·
+`letter-spacing: 1px`) · 12–13 (cuerpo denso, filas de Flujo, menús) · 14 (botones) · 15 (navbar) ·
 16 (títulos de panel/modal, mono) · 19 (logo, mono).
 Pesos: 500 normal de UI, 600 énfasis/títulos, 700 solo para el número del día actual.
 
@@ -100,12 +100,12 @@ Pesos: 500 normal de UI, 600 énfasis/títulos, 700 solo para el número del dí
 
 - `--oc-radius: 3px` para botones, inputs y filas; `--oc-radius-panel: 4px` para paneles,
   tarjetas, menús flotantes y modales; `999px` pastillas.
-- Layout raíz: `--oc-navbar-h: 61px`, `--oc-sidebar-w: 280px`. **Sin scroll de `body`**;
+- Layout raíz: `--oc-navbar-h: 61px`; navbar + panel central a todo el ancho (sin sidebar). **Sin scroll de `body`**;
   solo scrollean los sub-paneles.
 - Sombras de elementos flotantes: `0 4px 12px rgba(0,0,0,.35)` (pastillas),
   `0 8px 28px rgba(0,0,0,.45)` (menús), `0 20px 60px rgba(0,0,0,.5)` (modales).
 - Glow de hover: `box-shadow: 0 0 8px var(--oc-accent-cyan-glow)` (o 10–14px en elementos grandes).
-- z-index: menú radial 500–501 · desplegables 600 · modales 700.
+- z-index: desplegables y menú del día 600 · modales 700.
 - Foco visible por teclado: `:focus-visible { outline: 2px solid var(--oc-accent-cyan); outline-offset: 2px; }`.
   Los inputs no usan outline: su foco es borde cian + glow (`.oc-input:focus`).
 

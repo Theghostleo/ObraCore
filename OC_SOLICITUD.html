@@ -440,7 +440,7 @@ select.oc-input:focus-visible {
 <header id="oc-navbar">
   <a href="OC_MAIN.html" id="oc-back-link">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-    Volver al calendario
+    <span id="oc-back-label" data-i18n="cotizacion.accion.volver">Volver al calendario</span>
   </a>
   <div id="oc-logo">Obra<span>Core</span></div>
 
@@ -599,7 +599,7 @@ select.oc-input:focus-visible {
 </main>
 
 <script src="store.js"></script>
-<script src="i18n.js"></script>
+<script src="i18n.js?v=3"></script>
 <script>
 (function () {
   'use strict';
@@ -630,6 +630,28 @@ select.oc-input:focus-visible {
       params[key] = value;
     });
     return params;
+  }
+
+  // Origen: con ?desde=flujo, "Volver" regresa al detalle del proyecto en
+  // Flujo (#/flujo/PRJ-XXXX); si no, al calendario (OC_MAIN.html).
+  var desdeFlujo = (getQueryParams().desde === 'flujo');
+  function sufijoDesde() { return desdeFlujo ? '&desde=flujo' : ''; }
+  function volverUrl() {
+    var id = currentProyectoId;
+    return (desdeFlujo && id) ? 'OC_MAIN.html#/flujo/' + encodeURIComponent(id) : 'OC_MAIN.html';
+  }
+  function aplicarVolver() {
+    var url = volverUrl();
+    var aProyecto = url !== 'OC_MAIN.html';
+    var key = aProyecto ? 'volver.proyecto' : 'cotizacion.accion.volver';
+    var link = document.getElementById('oc-back-link');
+    if (link) { link.setAttribute('href', url); }
+    var label = document.getElementById('oc-back-label');
+    if (label) {
+      label.setAttribute('data-i18n', key);
+      var txt = window.OC_I18N ? OC_I18N.t(key) : key;
+      if (txt !== key) { label.textContent = txt; }
+    }
   }
 
   function pad2(n) {
@@ -904,8 +926,9 @@ select.oc-input:focus-visible {
         currentProyectoId = saved.proyectoId;
         // Para que un segundo "Guardar" actualice en vez de crear otra,
         // y para que recargar la página no pierda de vista cuál es.
-        var newSearch = '?proyecto=' + encodeURIComponent(saved.proyectoId) + '&id=' + encodeURIComponent(saved.id);
+        var newSearch = '?proyecto=' + encodeURIComponent(saved.proyectoId) + '&id=' + encodeURIComponent(saved.id) + sufijoDesde();
         window.history.replaceState(null, '', newSearch);
+        aplicarVolver();
       }
 
       console.log('[ObraCore] Solicitud de cotización — guardada:', saved);
@@ -913,7 +936,7 @@ select.oc-input:focus-visible {
     });
 
     byId('oc-btn-cancelar').addEventListener('click', function () {
-      window.location.href = 'OC_MAIN.html';
+      window.location.href = volverUrl();
     });
   }
 
@@ -922,6 +945,7 @@ select.oc-input:focus-visible {
 
   initDocumentos();
   initFromQuery();
+  aplicarVolver();
   initForm();
   OC_I18N.init();
 })();

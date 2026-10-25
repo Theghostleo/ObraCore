@@ -9,11 +9,19 @@ principio a fin: desde que llega la solicitud del cliente hasta el comisionamien
 
 ## Qué hace hoy
 
-- **Calendario** de actividades: distingue actividades operativas (instalación, fabricación,
-  mantenimiento…) de hitos (seguimientos, llamadas). Un día se marca *Reservado* con
-  actividades tentativas y *Ocupado* con actividades confirmadas.
-- **Explorador** de proyectos agrupado por mes de alta.
-- **Flujo de trabajo**: vista de las 7 etapas de cada proyecto como nodos conectados.
+Cada pregunta se responde en una sola herramienta:
+
+- **Calendario = agenda** (¿qué hay que hacer y cuándo?): eventos y tareas. Distingue actividades
+  operativas (instalación, fabricación, mantenimiento…) de hitos (seguimientos, llamadas); un
+  día se marca *Reservado* con actividades tentativas y *Ocupado* con confirmadas. Un clic en
+  cualquier día abre el **menú del día** (ver eventos, nuevo proyecto, agendar evento y
+  **Tareas**: recordatorios simples que no ocupan el calendario ni se ligan a un proyecto). Un
+  clic en un evento ofrece sus acciones y **Abrir proyecto**. El botón **?** explica los colores.
+- **Flujo de trabajo = proyectos** (¿en qué va cada proyecto?): lista con buscador, filtro por
+  estado y **+ Nuevo proyecto**, agrupada por mes de alta (el mes actual abierto, los demás
+  colapsables), con el menú ⋯ de cada proyecto (pausar, perdido, cancelar, reactivar). El detalle
+  muestra las 7 etapas como nodos conectados; **desde ahí se abre cada etapa** (el nodo
+  Cotización ofrece cotizar, ir a cotización o ver la lista con aceptar/rechazar).
 - **Etapas del proyecto:**
 
 | # | Etapa | Pantalla | Estado |
@@ -30,8 +38,9 @@ principio a fin: desde que llega la solicitud del cliente hasta el comisionamien
 
 ## Cómo ejecutarlo
 
-Requiere un servidor local (abrir los HTML con doble clic bloquea la carga de los
-diccionarios de idioma). Con Python instalado, desde la carpeta del proyecto:
+Basta con **doble clic** en `OC_MAIN.html` (los diccionarios de idioma son `.js`, no `.json`,
+justo para que funcione con `file://`). El servidor local solo hace falta para guardar PDFs en
+una carpeta. Con Python instalado, desde la carpeta del proyecto:
 
 ```bash
 python -m http.server 8080
@@ -43,13 +52,13 @@ y abrir <http://localhost:8080/OC_MAIN.html>.
 
 | Archivo | Para qué |
 |---|---|
-| `OC_MAIN.html` | Pantalla principal: navbar, explorador, calendario y flujo |
+| `OC_MAIN.html` | Pantalla principal: navbar, calendario (agenda) y flujo de trabajo |
 | `OC_*.html` | Una pantalla por etapa (autocontenidas) |
 | `store.js` | Única capa de datos (`window.OCStore`). Ninguna pantalla toca el almacenamiento directo |
 | `pdfStore.js` / `pdf.js` | Guardado y generación de PDFs (jsPDF) |
 | `forms.js` / `plantillas.js` | Motor de formularios por plantillas (levantamiento y futuras etapas) |
-| `flujo.js` | Vista de flujo de trabajo |
-| `i18n.js` + `i18n/` | Idiomas ES/EN |
+| `flujo.js` | Vista de flujo de trabajo: lista de proyectos por mes y detalle con nodos (desde donde se abre cada etapa) |
+| `i18n.js` + `i18n/*.js` | Idiomas ES/EN (diccionarios como `.js` para abrir con doble clic) |
 | `styles.css` | Estilos y tokens de diseño |
 | `lib/` | Librerías locales (jsPDF), sin CDN para funcionar sin internet |
 | `.claude/skills/` | Convenciones del proyecto para Claude Code (diseño, animación, pantallas de etapa, plantillas) |
@@ -58,11 +67,11 @@ Tecnología: HTML + CSS + JavaScript plano, sin frameworks ni proceso de build.
 
 ## Hoja de ruta
 
-1. **Higiene del código:** idiomas sin servidor, base CSS/JS compartida entre pantallas.
+1. **Higiene del código:** base CSS/JS compartida entre pantallas (idiomas sin servidor: hecho).
 2. **Backend con PostgreSQL** (usuarios, roles y almacenamiento de archivos) y **aviso de
    privacidad** conforme a la LFPDPPP para los datos personales de clientes.
 3. Piloto con obras reales.
-4. Clientes como entidad (CRM), recordatorios y tablero de reportes.
+4. Clientes como entidad (CRM), tablero de reportes y avisos/notificaciones de tareas.
 5. Etapas 4–7, levantamiento en campo sin conexión, cobranza.
 
 Enfoque inicial: sector **fotovoltaico y eléctrico** en México. La arquitectura de

@@ -1,14 +1,15 @@
-{
+/* Diccionario ES. Es .js (no .json) a propósito: con file:// el navegador bloquea
+   fetch() de archivos locales por CORS, pero sí permite cargar un <script>. */
+window.OC_I18N_DICTS = window.OC_I18N_DICTS || {};
+window.OC_I18N_DICTS.es = {
   "nav.calendario": "Calendario",
   "nav.flujo": "Flujo de trabajo",
   "nav.tercero": "Tercero",
   "nav.cuarto": "Cuarto",
-
-  "sidebar.title": "Explorador",
-  "sidebar.nuevoProyecto": "+ Nuevo proyecto",
-  "sidebar.filtro.texto": "Buscar proyecto o cliente...",
-  "sidebar.filtro.estadoTodos": "Todos los estados",
-  "sidebar.sinResultados": "Sin resultados para este filtro",
+  "flujo.nuevoProyecto": "+ Nuevo proyecto",
+  "flujo.filtro.texto": "Buscar proyecto o cliente...",
+  "flujo.filtro.estadoTodos": "Todos los estados",
+  "flujo.sinResultados": "Sin resultados para este filtro",
 
   "lang.aria": "Idioma",
   "user.aria": "Registro",
@@ -162,7 +163,6 @@
   "stage.programacion-instalacion": "Programación de instalación",
   "stage.comisionamiento-calidad": "Comisionamiento y calidad",
   "stage.proximamente": "Próximamente",
-  "stage.pronto": "PRONTO",
   "stage.estado.pendiente": "Pendiente",
   "stage.estado.en_curso": "En curso",
   "stage.estado.completada": "Completada",
@@ -190,8 +190,6 @@
   "proyecto.nuevo.campo.fechaAlta": "Fecha de alta",
   "proyecto.nuevo.guardar": "Crear proyecto",
   "proyecto.nuevo.cancelar": "Cancelar",
-
-  "proyecto.tooltip.fechaAlta": "Alta",
 
   "evento.tipo.instalacion": "Instalación",
   "evento.tipo.fabricacion": "Fabricación",
@@ -231,7 +229,6 @@
   "evento.nuevo.guardar": "Agendar evento",
 
   "calendar.chip.dia": "día",
-  "calendar.chip.verProyecto": "Ver proyecto",
 
   "calendar.diaVacio.nuevoProyecto": "Nuevo proyecto",
   "calendar.diaVacio.agendarEvento": "Agendar evento en proyecto existente",
@@ -291,5 +288,45 @@
   "flujo.siguientePaso.continuarSiguienteEtapa": "Continuar con la etapa siguiente",
   "flujo.siguientePaso.entregado": "Proyecto entregado",
   "flujo.siguientePaso.enProgreso": "En progreso — sin acción pendiente clara",
-  "flujo.detalle.noEncontrado": "No se encontró el proyecto indicado."
-}
+  "flujo.detalle.noEncontrado": "No se encontró el proyecto indicado.",
+
+  /* tareas del día */
+  "calendar.diaMenu.verEventos": "Ver eventos del día",
+  "tarea.seccion": "Tareas",
+  "tarea.nueva.boton": "+ Tarea",
+  "tarea.modal.nueva": "Nueva tarea",
+  "tarea.modal.editar": "Editar tarea",
+  "tarea.campo.titulo": "Título",
+  "tarea.campo.hora": "Hora (opcional)",
+  "tarea.campo.nota": "Nota (opcional)",
+  "tarea.ayuda": "Las tareas no ocupan el calendario ni se ligan a un proyecto.",
+  "tarea.accion.guardar": "Guardar",
+  "tarea.marcarHecha": "Marcar como hecha",
+  "tarea.eliminarAria": "Eliminar tarea",
+  "tarea.eliminarConfirmar": "¿Eliminar?",
+  "tarea.chip.mas": "tareas",
+
+  /* flujo / leyenda / volver */
+  "flujo.filtro.estadoAria": "Filtrar por estado",
+  "flujo.proyecto.acciones": "Acciones del proyecto",
+  "calendar.chip.abrirProyecto": "Abrir proyecto",
+  "volver.proyecto": "Volver al proyecto",
+  "leyenda.aria": "Leyenda del calendario",
+  "leyenda.dia.titulo": "Estado del día",
+  "leyenda.dia.reservado": "Solo hay actividades tentativas ese día.",
+  "leyenda.dia.ocupado": "Hay actividades confirmadas o en ejecución.",
+  "leyenda.eventos.titulo": "Eventos",
+  "leyenda.evento.tentativa": "Tentativa: aún sin confirmar (borde punteado).",
+  "leyenda.evento.confirmada": "Confirmada: ya está comprometida.",
+  "leyenda.evento.enEjecucion": "En ejecución: está pasando ahora (punto parpadeante).",
+  "leyenda.evento.terminada": "Terminada: ya se hizo (verde, atenuada).",
+  "leyenda.evento.hito": "Hito (llamada, seguimiento, entrega…): no ocupa el día.",
+  "leyenda.evento.vencida": "Alerta roja: actividad confirmada con fecha vencida. Hay que resolverla.",
+  "leyenda.hito.muestra": "Llamada",
+  "leyenda.vencida.muestra": "Vencida",
+  "leyenda.tareas.titulo": "Tareas",
+  "leyenda.tarea.muestra": "Tarea",
+  "leyenda.tarea.pendiente": "Tarea pendiente: recordatorio simple del día.",
+  "leyenda.tarea.hecha": "Tarea hecha (tachada, casilla verde).",
+  "leyenda.nota": "El color de un evento depende de su estado, nunca de su tipo. Las tareas no ocupan el calendario ni se ligan a un proyecto."
+};

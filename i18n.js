@@ -16,21 +16,41 @@
 
   var STORAGE_KEY = 'oc-lang';
   var DEFAULT_LANG = 'es';
+  // Subir al cambiar los diccionarios (y el ?v= de i18n.js en los HTML): evita servir una copia en caché.
+  var DICT_VERSION = 3;
   var SUPPORTED_LANGS = ['es', 'en'];
 
   var dictionaries = {};
   var currentLang = DEFAULT_LANG;
 
+  // Los diccionarios son .js (window.OC_I18N_DICTS[lang]) y no .json: con file://
+  // fetch() queda bloqueado por CORS, un <script> no.
   function loadDictionary(lang) {
     if (dictionaries[lang]) {
       return Promise.resolve(dictionaries[lang]);
     }
-    return fetch('i18n/' + lang + '.json')
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        dictionaries[lang] = data;
-        return data;
-      });
+    var ready = global.OC_I18N_DICTS && global.OC_I18N_DICTS[lang];
+    if (ready) {
+      dictionaries[lang] = ready;
+      return Promise.resolve(ready);
+    }
+    return new Promise(function (resolve, reject) {
+      var script = document.createElement('script');
+      script.src = 'i18n/' + lang + '.js?v=' + DICT_VERSION;
+      script.onload = function () {
+        var dict = global.OC_I18N_DICTS && global.OC_I18N_DICTS[lang];
+        if (dict) {
+          dictionaries[lang] = dict;
+          resolve(dict);
+        } else {
+          reject(new Error('Diccionario vacío: ' + lang));
+        }
+      };
+      script.onerror = function () {
+        reject(new Error('No se pudo cargar i18n/' + lang + '.js'));
+      };
+      document.head.appendChild(script);
+    });
   }
 
   function t(key) {
@@ -84,7 +104,7 @@
       });
     });
 
-    setLang(saved || DEFAULT_LANG);
+    setLang(saved || DEFAULT_LANG).catch(function (err) { console.error(err); });
   }
 
   global.OC_I18N = {

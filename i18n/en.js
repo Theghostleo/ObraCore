@@ -1,14 +1,15 @@
-{
+/* Diccionario EN. Es .js (no .json) a propósito: con file:// el navegador bloquea
+   fetch() de archivos locales por CORS, pero sí permite cargar un <script>. */
+window.OC_I18N_DICTS = window.OC_I18N_DICTS || {};
+window.OC_I18N_DICTS.en = {
   "nav.calendario": "Calendar",
   "nav.flujo": "Workflow",
   "nav.tercero": "Third",
   "nav.cuarto": "Fourth",
-
-  "sidebar.title": "Explorer",
-  "sidebar.nuevoProyecto": "+ New project",
-  "sidebar.filtro.texto": "Search project or client...",
-  "sidebar.filtro.estadoTodos": "All statuses",
-  "sidebar.sinResultados": "No results for this filter",
+  "flujo.nuevoProyecto": "+ New project",
+  "flujo.filtro.texto": "Search project or client...",
+  "flujo.filtro.estadoTodos": "All statuses",
+  "flujo.sinResultados": "No results for this filter",
 
   "lang.aria": "Language",
   "user.aria": "Account",
@@ -162,7 +163,6 @@
   "stage.programacion-instalacion": "Installation scheduling",
   "stage.comisionamiento-calidad": "Commissioning & QA",
   "stage.proximamente": "Coming soon",
-  "stage.pronto": "SOON",
   "stage.estado.pendiente": "Pending",
   "stage.estado.en_curso": "In progress",
   "stage.estado.completada": "Completed",
@@ -190,8 +190,6 @@
   "proyecto.nuevo.campo.fechaAlta": "Creation date",
   "proyecto.nuevo.guardar": "Create project",
   "proyecto.nuevo.cancelar": "Cancel",
-
-  "proyecto.tooltip.fechaAlta": "Created",
 
   "evento.tipo.instalacion": "Installation",
   "evento.tipo.fabricacion": "Manufacturing",
@@ -231,7 +229,6 @@
   "evento.nuevo.guardar": "Schedule event",
 
   "calendar.chip.dia": "day",
-  "calendar.chip.verProyecto": "View project",
 
   "calendar.diaVacio.nuevoProyecto": "New project",
   "calendar.diaVacio.agendarEvento": "Schedule event on existing project",
@@ -291,5 +288,45 @@
   "flujo.siguientePaso.continuarSiguienteEtapa": "Continue with the next stage",
   "flujo.siguientePaso.entregado": "Project delivered",
   "flujo.siguientePaso.enProgreso": "In progress — no clear pending action",
-  "flujo.detalle.noEncontrado": "The specified project was not found."
-}
+  "flujo.detalle.noEncontrado": "The specified project was not found.",
+
+  /* tareas del día */
+  "calendar.diaMenu.verEventos": "View day events",
+  "tarea.seccion": "Tasks",
+  "tarea.nueva.boton": "+ Task",
+  "tarea.modal.nueva": "New task",
+  "tarea.modal.editar": "Edit task",
+  "tarea.campo.titulo": "Title",
+  "tarea.campo.hora": "Time (optional)",
+  "tarea.campo.nota": "Note (optional)",
+  "tarea.ayuda": "Tasks don't take up the calendar or link to a project.",
+  "tarea.accion.guardar": "Save",
+  "tarea.marcarHecha": "Mark as done",
+  "tarea.eliminarAria": "Delete task",
+  "tarea.eliminarConfirmar": "Delete?",
+  "tarea.chip.mas": "tasks",
+
+  /* flujo / leyenda / volver */
+  "flujo.filtro.estadoAria": "Filter by status",
+  "flujo.proyecto.acciones": "Project actions",
+  "calendar.chip.abrirProyecto": "Open project",
+  "volver.proyecto": "Back to project",
+  "leyenda.aria": "Calendar legend",
+  "leyenda.dia.titulo": "Day status",
+  "leyenda.dia.reservado": "Only tentative activities that day.",
+  "leyenda.dia.ocupado": "There are confirmed or in-progress activities.",
+  "leyenda.eventos.titulo": "Events",
+  "leyenda.evento.tentativa": "Tentative: not confirmed yet (dashed border).",
+  "leyenda.evento.confirmada": "Confirmed: already committed.",
+  "leyenda.evento.enEjecucion": "In progress: happening now (pulsing dot).",
+  "leyenda.evento.terminada": "Done: already completed (green, dimmed).",
+  "leyenda.evento.hito": "Milestone (call, follow-up, delivery…): does not take up the day.",
+  "leyenda.evento.vencida": "Red alert: confirmed activity past its date. Needs attention.",
+  "leyenda.hito.muestra": "Call",
+  "leyenda.vencida.muestra": "Overdue",
+  "leyenda.tareas.titulo": "Tasks",
+  "leyenda.tarea.muestra": "Task",
+  "leyenda.tarea.pendiente": "Pending task: a simple reminder for the day.",
+  "leyenda.tarea.hecha": "Done task (struck through, green box).",
+  "leyenda.nota": "An event's color depends on its status, never on its type. Tasks don't take up the calendar or link to a project."
+};
